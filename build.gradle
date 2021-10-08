@@ -1,0 +1,80 @@
+plugins {
+    id 'java'
+    id "org.jetbrains.kotlin.jvm" version "1.5.31"
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+}
+
+group = 'me.bscal'
+version = '1.0-SNAPSHOT'
+
+sourceSets {
+    main.kotlin.srcDirs += 'src/main/kotlin'
+    main.java.srcDirs += 'src/main/java'
+}
+
+repositories {
+    //mavenLocal()
+    mavenCentral()
+    maven {
+        name = 'papermc-repo'
+        url = 'https://papermc.io/repo/repository/maven-public/'
+    }
+    maven {
+        name = 'sonatype'
+        url = 'https://oss.sonatype.org/content/groups/public/'
+    }
+    maven {
+        url "https://libraries.minecraft.net"
+    }
+}
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.17.1-R0.1-SNAPSHOT'
+    compileOnly 'com.mojang:brigadier:1.0.18'
+    compileOnly 'com.github.stefvanschie.inventoryframework:IF:0.10.3'
+    implementation 'net.axay:kspigot:1.17.4'
+}
+
+// These are excluded because net.axay:kspigot will use spigot's libraries function to download.
+// This is not an issue unless you use shadowJar because kotlinx and kotlin will be included which causes
+// 2 versions of kotlin library to be loaded, but we need them at compile time still.
+configurations {
+    runtimeOnly.exclude group: "net.axay"
+    runtimeOnly.exclude group: "org.jetbrains.kotlin"
+}
+
+shadowJar {
+    relocate 'com.github.stefvanschie.inventoryframework', 'me.bscal.inventoryframework'
+}
+
+def targetJavaVersion = 17
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "16"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "16"
+}
+
+
+tasks.withType(JavaCompile).configureEach {
+    options.release.set(targetJavaVersion)
+    options.encoding = "UTF-8"
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}

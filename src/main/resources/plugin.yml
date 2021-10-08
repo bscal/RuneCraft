@@ -1,0 +1,7 @@
+name: RuneCraft
+version: '${version}'
+main: me.bscal.runecraft.RuneCraft
+api-version: 1.17
+authors: [ bscal ]
+libraries:
+  - "net.axay:kspigot:1.17.4"
