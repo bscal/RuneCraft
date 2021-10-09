@@ -1,0 +1,11 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "minecraft:item/wooden_hoe"
+  },
+  "overrides": [
+    {"predicate": {"custom_model_data":11000}, "model": "item/iron_chisel"},
+    {"predicate": {"custom_model_data":11001}, "model": "item/gold_chisel"},
+    {"predicate": {"custom_model_data":11002}, "model": "item/diamond_chisel"}
+  ]
+}

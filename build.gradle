@@ -31,7 +31,7 @@ repositories {
 dependencies {
     compileOnly 'io.papermc.paper:paper-api:1.17.1-R0.1-SNAPSHOT'
     compileOnly 'com.mojang:brigadier:1.0.18'
-    compileOnly 'com.github.stefvanschie.inventoryframework:IF:0.10.3'
+    implementation 'com.github.stefvanschie.inventoryframework:IF:0.10.3'
     implementation 'net.axay:kspigot:1.17.4'
 }
 

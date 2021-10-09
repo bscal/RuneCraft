@@ -1,6 +1,7 @@
 package me.bscal.runecraft
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import java.io.Serializable
@@ -22,7 +23,7 @@ object BoardRegistry
 
 interface BoardGenerator : Serializable
 {
-	fun Generate(player: Player, board: RuneBoard)
+	fun Generate(player: Player, board: RuneBoard) : Array<BoardSlot>
 }
 
 class OverworldBoard : BoardGenerator
@@ -30,15 +31,12 @@ class OverworldBoard : BoardGenerator
 
 	val BaseSlot = DefaultSlot(Material.STONE)
 
-	override fun Generate(player: Player, board: RuneBoard)
+	override fun Generate(player: Player, board: RuneBoard) : Array<BoardSlot>
 	{
-		for (i in 0 until board.Size)
-		{
-			board.Slots[i] = BaseSlot
-		}
-
-		board.Slots[Random.nextInt(0, 5) + Random.nextInt(0, 5)] = DiamondSlot()
-		board.Slots[Random.nextInt(0, 5) + Random.nextInt(0, 5)] = DiamondSlot()
+		val slots = Array<BoardSlot>(board.Size) { BaseSlot }
+		slots[Random.nextInt(0, 6 * 6)] = DiamondSlot()
+		slots[Random.nextInt(0, 6 * 6)] = DiamondSlot()
+		return slots
 	}
 
 }
