@@ -3,6 +3,7 @@ package me.bscal.runecraft
 import com.github.stefvanschie.inventoryframework.gui.GuiItem
 import com.github.stefvanschie.inventoryframework.gui.type.ChestGui
 import com.github.stefvanschie.inventoryframework.pane.StaticPane
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import net.axay.kspigot.chat.KColors
 import net.axay.kspigot.items.addLore
@@ -17,11 +18,11 @@ const val LARGE_RUNE_SIZE = 6 * 6
 
 class RuneBoard(val Rune: Rune, val Size: Int)
 {
-	private lateinit var Slots: ObjectArrayList<BoardSlot>
+	lateinit var Slots: Int2ObjectOpenHashMap<BoardSlot>
 	private lateinit var Gui: ChestGui
 	private var Generator: BoardGenerator? = null
 
-	constructor(rune: Rune, size: Int, slots: ObjectArrayList<BoardSlot>) : this(rune, size)
+	constructor(rune: Rune, size: Int, slots: Int2ObjectOpenHashMap<BoardSlot>) : this(rune, size)
 	{
 		Slots = slots
 	}
@@ -30,7 +31,8 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	{
 		if (this::Slots.isInitialized) return false
 		Generator = BoardRegistry.Registry[Rune.Type] ?: BoardRegistry.Default
-		Slots = ObjectArrayList(Generator?.Generate(player, this, Rune.Rarity))
+		Slots = Int2ObjectOpenHashMap(Size, 1.0f)
+		Generator?.Generate(player, this, Rune.Rarity)
 		return true
 	}
 
@@ -66,16 +68,11 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		val board = StaticPane(2, 0, 6, 6)
 		Gui.addPane(board)
 
-		var x = 0
-		var y = 0
-		for (slot in Slots)
+		for (slot in Slots.int2ObjectEntrySet())
 		{
-			board.addItem(slot.NewItem(player, this), x, y)
-			if (x++ > 4)
-			{
-				x = 0
-				y++
-			}
+			val x = slot.intKey and 0xff
+			val y = slot.intKey shr 16
+			board.addItem(slot.value.NewItem(player, this), x, y)
 		}
 
 		Gui.show(player)
@@ -95,6 +92,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	{
 
 	}
+
 }
 
 object GuiItems

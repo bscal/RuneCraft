@@ -54,6 +54,33 @@ class DefaultSlot(material: Material) : BoardSlot(GuiItem(ItemStack(material)))
 	override fun CanPlace(player: Player, runeBoard: RuneBoard): Boolean = true
 }
 
+class BedrockSlot : BoardSlot(GuiItem(ItemStack(Material.BEDROCK)))
+{
+	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
+	{
+	}
+
+	override fun OnBreak(player: Player, tool: RuneTool, runeBoard: RuneBoard)
+	{
+	}
+
+	override fun CanPlace(player: Player, runeBoard: RuneBoard): Boolean = false
+}
+
+class DirtSlot(val IsGrass: Boolean) : BoardSlot(GuiItem(ItemStack(if (IsGrass) Material.GRASS_BLOCK else Material.DIRT)))
+{
+	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
+	{
+	}
+
+	override fun OnBreak(player: Player, tool: RuneTool, runeBoard: RuneBoard)
+	{
+	}
+
+	override fun CanPlace(player: Player, runeBoard: RuneBoard): Boolean = true
+
+}
+
 abstract class GemSlot(material: Material) : BoardSlot(GuiItem(ItemStack(material)))
 {}
 
@@ -76,16 +103,11 @@ class DiamondSlot : GemSlot(Material.DIAMOND)
 
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
 	{
-		TODO("Not yet implemented")
 	}
 
 	override fun OnBreak(player: Player, tool: RuneTool, runeBoard: RuneBoard)
 	{
-		TODO("Not yet implemented")
 	}
 
-	override fun CanPlace(player: Player, runeBoard: RuneBoard): Boolean
-	{
-		TODO("Not yet implemented")
-	}
+	override fun CanPlace(player: Player, runeBoard: RuneBoard): Boolean = true
 }

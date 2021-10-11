@@ -49,18 +49,15 @@ class RuneCraft : KSpigot()
 
 		command("runecraft_items_test") {
 			runs {
-				val iron = CustomItems.Items["iron_chisel"]?.ItemStack
-				val gold = CustomItems.Items["gold_chisel"]?.ItemStack
-				val diamond = CustomItems.Items["diamond_chisel"]?.ItemStack
-				if (iron != null) player.give(iron.clone())
-				if (gold != null) player.give(gold.clone())
-				if (diamond != null) player.give(diamond.clone())
+				player.give(RuneTool.IRON_CHISEL.Stack)
+				player.give(RuneTool.GOLD_CHISEL.Stack)
+				player.give(RuneTool.DIAMOND_CHISEL.Stack)
 			}
 		}
 
 		command("runecraft_test") {
 			runs {
-				val board = RuneBoard(RuneType.Overworld, LARGE_RUNE_SIZE)
+				val board = RuneBoard(Rune(RuneType.Overworld, 1, 1), LARGE_RUNE_SIZE)
 				board.Generate(this.player)
 				board.Open(this.player)
 			}

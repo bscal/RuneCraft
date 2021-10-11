@@ -4,10 +4,9 @@ import me.bscal.runecraft.RunecraftCustomItems.CreateChisel
 import me.bscal.runecraft.RunecraftCustomItems.UsesKey
 import me.bscal.runecraft.custom_items.CustomItem
 import me.bscal.runecraft.custom_items.CustomItems
-import net.axay.kspigot.items.addLore
-import net.axay.kspigot.items.itemStack
-import net.axay.kspigot.items.meta
-import net.axay.kspigot.items.name
+import net.axay.kspigot.chat.KColors
+import net.axay.kspigot.items.*
+import net.kyori.adventure.text.TextComponent
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -32,6 +31,7 @@ class RuneTool(val InternalName: String, val Level: Int, val Stack: ItemStack)
 		Register()
 	}
 
+	@Suppress("DEPRECATION")
 	fun ItemsEquals(otherStack: ItemStack): Boolean
 	{
 		val comparisonType = if (Stack.type.isLegacy) Bukkit.getUnsafe().fromLegacy(Stack.data, true)
@@ -46,12 +46,29 @@ class RuneTool(val InternalName: String, val Level: Int, val Stack: ItemStack)
 		return (itemStack.itemMeta.persistentDataContainer.get(UsesKey, PersistentDataType.INTEGER) ?: 0) - uses > 0
 	}
 
-	fun Deincremeant(itemStack: ItemStack, uses: Int = 1)
+	fun Deincremeant(itemStack: ItemStack, uses: Int = 1) : Int
 	{
 		val data = itemStack.itemMeta.persistentDataContainer
 		val newUses = (data.get(UsesKey, PersistentDataType.INTEGER) ?: 0) - uses
 		if (newUses < 1) itemStack.amount = 0
 		else data.set(UsesKey, PersistentDataType.INTEGER, newUses)
+		return newUses
+	}
+
+	fun UpdateLore(itemStack: ItemStack, uses: Int)
+	{
+		if (uses < 1) return
+		// For each in case another plugin or something add lore
+		itemStack.lore()?.forEach {
+			it as TextComponent
+			val str = it.content()
+			if (str.contains("Uses:"))
+			{
+				val split = str.split(':')
+				it.content("${split[0]} $uses")
+				return
+			}
+		}
 	}
 
 	private fun Register()
@@ -71,12 +88,12 @@ object RunecraftCustomItems
 	{
 		val itemstack = itemStack(Material.WOODEN_HOE) {
 			meta {
-				name = displayName
+				name = "${KColors.WHITE}$displayName"
 				addLore {
-					CHISEL_LORE_USE
-					"Uses: ${uses}"
+					+CHISEL_LORE_USE
+					+"Uses: $uses"
 				}
-				setCustomModelData(modelId)
+				customModel = modelId
 				persistentDataContainer.set(NameKey, PersistentDataType.STRING, internalName)
 				persistentDataContainer.set(UsesKey, PersistentDataType.INTEGER, uses)
 			}

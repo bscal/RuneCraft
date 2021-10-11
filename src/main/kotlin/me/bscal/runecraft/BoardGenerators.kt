@@ -1,7 +1,7 @@
 package me.bscal.runecraft
 
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import java.io.Serializable
@@ -21,13 +21,11 @@ object BoardRegistry
 }
 
 data class FeatureData(val rarity: Double, val min: Int, val max: Int)
-{
-}
-
+{}
 
 interface BoardGenerator : Serializable
 {
-	fun Generate(player: Player, board: RuneBoard, rarity: Int) : Array<BoardSlot>
+	fun Generate(player: Player, board: RuneBoard, rarity: Int)
 }
 
 abstract class BaseBoardGenerator(val FinalValue: Int) : BoardGenerator
@@ -37,30 +35,59 @@ abstract class BaseBoardGenerator(val FinalValue: Int) : BoardGenerator
 
 	protected var CurrentValue = 0
 
-	abstract fun CommonPass(player: Player, board: RuneBoard, rarity: Int)
-
-	abstract fun UniquePass(player: Player, board: RuneBoard, rarity: Int)
+	abstract fun GenerateBase(player: Player, board: RuneBoard, rarity: Int)
 }
 
 class OverworldBoard : BaseBoardGenerator(8)
 {
-
-	override fun Generate(player: Player, board: RuneBoard, rarity: Int) : Array<BoardSlot>
+	override fun GenerateBase(player: Player, board: RuneBoard, rarity: Int)
 	{
-		val slots = Array<BoardSlot>(board.Size) { BaseSlot }
-		slots[Random.nextInt(0, 6 * 6)] = DiamondSlot()
-		slots[Random.nextInt(0, 6 * 6)] = DiamondSlot()
-		return slots
+		var x = 0
+		var y = 0
+		for (i in 0 until board.Size)
+		{
+			val key = x or (y shl 16)
+
+			if (y < 2 && Random.nextInt(1, 7) > 3) board.Slots[key] = DirtSlot(y < 1)
+			else board.Slots[key] = BaseSlot
+
+			x++
+			if (x > 5)
+			{
+				x = 0
+				y++
+			}
+		}
 	}
 
-	override fun CommonPass(player: Player, board: RuneBoard, rarity: Int)
+	override fun Generate(player: Player, board: RuneBoard, rarity: Int)
 	{
-		TODO("Not yet implemented")
-	}
+		GenerateBase(player, board, rarity)
 
-	override fun UniquePass(player: Player, board: RuneBoard, rarity: Int)
-	{
-		TODO("Not yet implemented")
-	}
+		val decided = IntOpenHashSet(board.Slots.size, 1.0f)
 
+		var bedrockCount = Random.nextInt(2, 5)
+		while (bedrockCount > 0)
+		{
+			val key = Random.nextInt(6) or (Random.nextInt(6) shl 16)
+			if (!decided.contains(key))
+			{
+				decided.add(key)
+				board.Slots[key] = BedrockSlot()
+				bedrockCount--
+			}
+		}
+
+		var gemCount = Random.nextInt(2, 3)
+		while (gemCount > 0)
+		{
+			val key = Random.nextInt(6) or (Random.nextInt(6) shl 16)
+			if (!decided.contains(key))
+			{
+				decided.add(key)
+				board.Slots[key] = DiamondSlot()
+				gemCount--
+			}
+		}
+	}
 }

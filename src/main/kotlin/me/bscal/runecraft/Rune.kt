@@ -11,15 +11,11 @@ class Rune(val Type: RuneType, val Rarity: Int, val Color: Int)
 	private var Board: RuneBoard? = null
 
 	companion object {
-		fun ReadFromItemStack(itemStack: ItemStack) : Rune
-		{
-
-		}
 	}
 
 	fun Generate(player: Player) : Boolean
 	{
-		Board?.Generate(player)
+		return Board?.Generate(player) ?: false
 	}
 
 	fun Open(player: Player)
