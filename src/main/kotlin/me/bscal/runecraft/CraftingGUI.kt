@@ -15,22 +15,30 @@ import org.bukkit.entity.Player
 const val SMALL_RUNE_SIZE = 4 * 4
 const val LARGE_RUNE_SIZE = 6 * 6
 
-class RuneBoard(val Type: RuneType, val Size: Int)
+class RuneBoard(val Rune: Rune, val Size: Int)
 {
 	private lateinit var Slots: ObjectArrayList<BoardSlot>
-	private lateinit var Generator: BoardGenerator
 	private lateinit var Gui: ChestGui
+	private var Generator: BoardGenerator? = null
 
-	fun Generate(player: Player)
+	constructor(rune: Rune, size: Int, slots: ObjectArrayList<BoardSlot>) : this(rune, size)
 	{
-		Generator = BoardRegistry.Registry[Type] ?: BoardRegistry.Default
-		Slots = ObjectArrayList(Generator.Generate(player, this))
+		Slots = slots
+	}
+
+	fun Generate(player: Player) : Boolean
+	{
+		if (this::Slots.isInitialized) return false
+		Generator = BoardRegistry.Registry[Rune.Type] ?: BoardRegistry.Default
+		Slots = ObjectArrayList(Generator?.Generate(player, this, Rune.Rarity))
+		return true
 	}
 
 	fun Open(player: Player)
 	{
-		//if (Gui.viewers.contains(player)) return
+		if (this::Gui.isInitialized) Gui.show(player)
 
+		Generate(player)
 		Gui = ChestGui(6, "${KColors.RED}RuneCraft")
 
 		val leftSeparator = StaticPane(1, 0, 1, 6)

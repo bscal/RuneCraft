@@ -20,23 +20,47 @@ object BoardRegistry
 
 }
 
+data class FeatureData(val rarity: Double, val min: Int, val max: Int)
+{
+}
+
 
 interface BoardGenerator : Serializable
 {
-	fun Generate(player: Player, board: RuneBoard) : Array<BoardSlot>
+	fun Generate(player: Player, board: RuneBoard, rarity: Int) : Array<BoardSlot>
 }
 
-class OverworldBoard : BoardGenerator
+abstract class BaseBoardGenerator(val FinalValue: Int) : BoardGenerator
+{
+	var BaseSlot = DefaultSlot(Material.STONE)
+	val Features: Object2ObjectOpenHashMap<BoardSlot, FeatureData> = Object2ObjectOpenHashMap()
+
+	protected var CurrentValue = 0
+
+	abstract fun CommonPass(player: Player, board: RuneBoard, rarity: Int)
+
+	abstract fun UniquePass(player: Player, board: RuneBoard, rarity: Int)
+}
+
+class OverworldBoard : BaseBoardGenerator(8)
 {
 
-	val BaseSlot = DefaultSlot(Material.STONE)
-
-	override fun Generate(player: Player, board: RuneBoard) : Array<BoardSlot>
+	override fun Generate(player: Player, board: RuneBoard, rarity: Int) : Array<BoardSlot>
 	{
 		val slots = Array<BoardSlot>(board.Size) { BaseSlot }
 		slots[Random.nextInt(0, 6 * 6)] = DiamondSlot()
 		slots[Random.nextInt(0, 6 * 6)] = DiamondSlot()
 		return slots
+	}
+
+	override fun CommonPass(player: Player, board: RuneBoard, rarity: Int)
+	{
+		TODO("Not yet implemented")
+	}
+
+	override fun UniquePass(player: Player, board: RuneBoard, rarity: Int)
+	{
+		TODO("Not yet implemented")
 	}
 
 }

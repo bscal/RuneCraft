@@ -1,7 +1,51 @@
 package me.bscal.runecraft
 
-class Rune(val Type: RuneType)
+import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
+
+class Rune(val Type: RuneType, val Rarity: Int, val Color: Int)
 {
+	var IsGenerated: Boolean = false
+	var IsBuilt: Boolean = false
+
+	private var Board: RuneBoard? = null
+
+	companion object {
+		fun ReadFromItemStack(itemStack: ItemStack) : Rune
+		{
+
+		}
+	}
+
+	fun Generate(player: Player) : Boolean
+	{
+		Board?.Generate(player)
+	}
+
+	fun Open(player: Player)
+	{
+		Board?.Open(player)
+	}
+
+	fun AddRuneToItem(player: Player, itemStack: ItemStack) : Boolean
+	{
+		return true
+	}
+
+	fun WriteToItemstack(itemStack: ItemStack)
+	{
+
+	}
+
+	fun Serialize()
+	{
+
+	}
+
+	fun Deserialize()
+	{
+
+	}
 
 }
 
