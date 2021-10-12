@@ -2,6 +2,7 @@ package me.bscal.runecraft
 
 import me.bscal.runecraft.RunecraftCustomItems.CreateChisel
 import me.bscal.runecraft.RunecraftCustomItems.UsesKey
+import me.bscal.runecraft.custom_items.CustomId
 import me.bscal.runecraft.custom_items.CustomItem
 import me.bscal.runecraft.custom_items.CustomItems
 import net.axay.kspigot.chat.KColors
@@ -13,80 +14,89 @@ import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
-class RuneTool(val InternalName: String, val Level: Int, val Stack: ItemStack)
+class RuneTool(val InternalName: String, val Level: Int, defaultStack: ItemStack) : CustomItem(defaultStack, true)
 {
+
 	companion object
 	{
-		val IRON_CHISEL = RuneTool("iron_chisel", 1, CreateChisel("iron_chisel", "Iron Chisel", 11000, 16))
-		val GOLD_CHISEL = RuneTool("gold_chisel", 2, CreateChisel("gold_chisel", "Gold Chisel", 11001, 16))
-		val DIAMOND_CHISEL = RuneTool("diamond_chisel", 3, CreateChisel("diamond_chisel", "Diamond Chisel", 11002, 32))
+		lateinit var IRON_CHISEL: RuneTool; private set
+		lateinit var GOLD_CHISEL: RuneTool; private set
+		lateinit var DIAMOND_CHISEL: RuneTool; private set
+		fun RegisterTools()
+		{
+			IRON_CHISEL = RuneTool("iron_chisel", 1, CreateChisel("Iron Chisel", 11000, 16))
+			GOLD_CHISEL = RuneTool("gold_chisel", 2, CreateChisel("Gold Chisel", 11001, 16))
+			DIAMOND_CHISEL = RuneTool("diamond_chisel", 3, CreateChisel("Diamond Chisel", 11002, 32))
+		}
 	}
 
 	init
 	{
-		if (!Stack.hasItemMeta()) assert(false) { "RuneTool has no ItemMeta" }
-		if (!Stack.itemMeta.hasCustomModelData()) assert(false) { "RuneTool has no customModelData" }
-		if (!Stack.itemMeta.persistentDataContainer.has(UsesKey, PersistentDataType.INTEGER)) assert(
+		if (!DefaultStack.hasItemMeta()) assert(false) { "RuneTool has no ItemMeta" }
+		if (!DefaultStack.itemMeta.hasCustomModelData()) assert(false) { "RuneTool has no customModelData" }
+		if (!DefaultStack.itemMeta.persistentDataContainer.has(UsesKey, PersistentDataType.INTEGER)) assert(
 			false) { "RuneTool has no UsesKey persistent data!" }
-		Register()
+		CustomItems.Register(InternalName, CustomId(DefaultStack.type, DefaultStack.itemMeta.customModelData), this)
 	}
 
 	@Suppress("DEPRECATION")
 	fun ItemsEquals(otherStack: ItemStack): Boolean
 	{
-		val comparisonType = if (Stack.type.isLegacy) Bukkit.getUnsafe().fromLegacy(Stack.data, true)
-		else Stack.type // This may be called from legacy item stacks, try to get the right material
+		val comparisonType = if (DefaultStack.type.isLegacy) Bukkit.getUnsafe().fromLegacy(DefaultStack.data, true)
+		else DefaultStack.type // This may be called from legacy item stacks, try to get the right material
 
 		return comparisonType == otherStack.type && otherStack.hasItemMeta() && Bukkit.getItemFactory()
-			.equals(this.Stack.itemMeta, otherStack.itemMeta)
+			.equals(this.DefaultStack.itemMeta, otherStack.itemMeta)
 	}
 
 	fun AllowUse(itemStack: ItemStack, uses: Int = 1): Boolean
 	{
-		return (itemStack.itemMeta.persistentDataContainer.get(UsesKey, PersistentDataType.INTEGER) ?: 0) - uses > 0
+		return true //(itemStack.itemMeta.persistentDataContainer.get(UsesKey, PersistentDataType.INTEGER) ?: 0) - uses > 0
 	}
 
-	fun Deincremeant(itemStack: ItemStack, uses: Int = 1) : Int
+	fun Deincremeant(itemStack: ItemStack, uses: Int = 1): Int
 	{
-		val data = itemStack.itemMeta.persistentDataContainer
-		val newUses = (data.get(UsesKey, PersistentDataType.INTEGER) ?: 0) - uses
+		val meta = itemStack.itemMeta
+		val newUses = (meta.persistentDataContainer.get(UsesKey, PersistentDataType.INTEGER) ?: 0) - uses
 		if (newUses < 1) itemStack.amount = 0
-		else data.set(UsesKey, PersistentDataType.INTEGER, newUses)
+		else
+		{
+			meta.persistentDataContainer.set(UsesKey, PersistentDataType.INTEGER, newUses)
+			RuneCraft.LogDebug(java.util.logging.Level.INFO, "Updating uses to $newUses")
+		}
+		itemStack.itemMeta = meta
+		UpdateLore(itemStack, newUses)
 		return newUses
 	}
 
 	fun UpdateLore(itemStack: ItemStack, uses: Int)
 	{
-		if (uses < 1) return
-		// For each in case another plugin or something add lore
-		itemStack.lore()?.forEach {
-			it as TextComponent
-			val str = it.content()
-			if (str.contains("Uses:"))
+		if (uses < 1) return  // For each in case another plugin or something add lore
+		val meta = itemStack.itemMeta
+		val lore = meta.lore
+		itemStack.lore()
+		if (lore != null)
+		{
+			for (i in 0 until lore.size)
 			{
-				val split = str.split(':')
-				it.content("${split[0]} $uses")
-				return
+				if (lore[i].contains("Uses"))
+					lore[i] = "Uses: $uses"
 			}
 		}
-	}
-
-	private fun Register()
-	{
-		CustomItems.Items[InternalName] = CustomItem(Stack, true)
+		meta.lore = lore
+		itemStack.itemMeta = meta
 	}
 }
 
 object RunecraftCustomItems
 {
-	const val CHISEL_LORE_USE = "Used in the art of rune crafting"
+	private const val CHISEL_LORE_USE = "Used in the art of rune crafting"
 
-	val NameKey = NamespacedKey(RuneCraft.INSTANCE, "custom_name")
 	val UsesKey = NamespacedKey(RuneCraft.INSTANCE, "uses")
 
-	fun CreateChisel(internalName: String, displayName: String, modelId: Int, uses: Int): ItemStack
+	fun CreateChisel(displayName: String, modelId: Int, uses: Int): ItemStack
 	{
-		val itemstack = itemStack(Material.WOODEN_HOE) {
+		val itemStack = itemStack(Material.WOODEN_HOE) {
 			meta {
 				name = "${KColors.WHITE}$displayName"
 				addLore {
@@ -94,10 +104,9 @@ object RunecraftCustomItems
 					+"Uses: $uses"
 				}
 				customModel = modelId
-				persistentDataContainer.set(NameKey, PersistentDataType.STRING, internalName)
 				persistentDataContainer.set(UsesKey, PersistentDataType.INTEGER, uses)
 			}
 		}
-		return itemstack
+		return itemStack
 	}
 }

@@ -48,7 +48,7 @@ class OverworldBoard : BaseBoardGenerator(8)
 		{
 			val key = x or (y shl 16)
 
-			if (y < 2 && Random.nextInt(1, 7) > 3) board.Slots[key] = DirtSlot(y < 1)
+			if (y < 2 && Random.nextInt(1, 6) > 4) board.Slots[key] = DirtSlot(y < 1)
 			else board.Slots[key] = BaseSlot
 
 			x++

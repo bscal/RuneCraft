@@ -3,7 +3,7 @@ package me.bscal.runecraft
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 
-class Rune(val Type: RuneType, val Rarity: Int, val Color: Int)
+class Rune(val Type: RuneType, val Rarity: Int, val Color: Int, val Stability : Int)
 {
 	var IsGenerated: Boolean = false
 	var IsBuilt: Boolean = false

@@ -1,35 +1,61 @@
 package me.bscal.runecraft
 
 import com.github.stefvanschie.inventoryframework.gui.GuiItem
+import me.bscal.runecraft.custom_items.CustomItems
 import net.axay.kspigot.chat.KColors
-import net.axay.kspigot.items.CustomItemIdentifier
 import net.axay.kspigot.items.addLore
 import net.axay.kspigot.items.meta
 import net.axay.kspigot.items.name
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TextComponent
 import org.bukkit.Material
 import org.bukkit.entity.Player
+import org.bukkit.event.Event
+import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
+import java.util.logging.Level
 
 interface IBoardSlot
 {
-	fun NewItem(player: Player, runeBoard: RuneBoard): GuiItem
-
 	fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
 
-	fun OnBreak(player: Player, tool: RuneTool, runeBoard: RuneBoard)
+	fun OnBreak(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent)
 
-	fun CanPlace(player: Player, runeBoard: RuneBoard): Boolean
+	fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean
 }
 
 abstract class BoardSlot(val Item: GuiItem) : IBoardSlot
 {
-
-	override fun NewItem(player: Player, runeBoard: RuneBoard): GuiItem
+	init
 	{
-		val item = Item.copy()
-		Update(item, player, runeBoard)
-		return item
+		Item.setAction(::HandleClick)
+	}
+
+	private fun HandleClick(it: InventoryClickEvent)
+	{
+		it.result = Event.Result.DENY
+		if (it.clickedInventory != null && it.clickedInventory?.type == InventoryType.CHEST && it.isLeftClick)
+		{
+			val x = 5.coerceAtMost(0.coerceAtLeast(it.slot % 9 - 2))
+			val y = it.slot / 9
+			val key = x or (y shl 16)
+
+			val board = RuneBoardCache[it.whoClicked.uniqueId] ?: return
+			if (!board.GetGuiTitle().equals(it.view.title)) return
+
+			val tool: ItemStack = it.cursor ?: ItemStack(Material.AIR)
+			val customItem = CustomItems.GetByItemstack(tool) ?: return
+			if (customItem is RuneTool)
+			{
+				val slot = board.Slots[key]
+				if (board.CanBreak(x, y, slot, tool, customItem, it))
+				{
+					slot.OnBreak(x, y, slot, tool, customItem, it)
+					board.OnBreak(x, y, slot, tool, customItem, it)
+				}
+			}
+		}
 	}
 }
 
@@ -47,24 +73,32 @@ class DefaultSlot(material: Material) : BoardSlot(GuiItem(ItemStack(material)))
 	{
 	}
 
-	override fun OnBreak(player: Player, tool: RuneTool, runeBoard: RuneBoard)
+	override fun OnBreak(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent)
 	{
 	}
 
-	override fun CanPlace(player: Player, runeBoard: RuneBoard): Boolean = true
+	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean = true
 }
 
 class BedrockSlot : BoardSlot(GuiItem(ItemStack(Material.BEDROCK)))
 {
+	init
+	{
+		val lore = ArrayList<Component>()
+		lore.add(Component.text("${KColors.RED}Unbreakable"))
+		Item.item.lore(lore)
+	}
+
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
 	{
 	}
 
-	override fun OnBreak(player: Player, tool: RuneTool, runeBoard: RuneBoard)
+	override fun OnBreak(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent)
 	{
 	}
 
-	override fun CanPlace(player: Player, runeBoard: RuneBoard): Boolean = false
+	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean =
+		false
 }
 
 class DirtSlot(val IsGrass: Boolean) : BoardSlot(GuiItem(ItemStack(if (IsGrass) Material.GRASS_BLOCK else Material.DIRT)))
@@ -73,11 +107,11 @@ class DirtSlot(val IsGrass: Boolean) : BoardSlot(GuiItem(ItemStack(if (IsGrass) 
 	{
 	}
 
-	override fun OnBreak(player: Player, tool: RuneTool, runeBoard: RuneBoard)
+	override fun OnBreak(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent)
 	{
 	}
 
-	override fun CanPlace(player: Player, runeBoard: RuneBoard): Boolean = true
+	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean = true
 
 }
 
@@ -95,9 +129,6 @@ class DiamondSlot : GemSlot(Material.DIAMOND)
 				Component.text("${KColors.GREEN}+ .25 Attack Damage")
 			}
 		}
-
-		val id = CustomItemIdentifier(1, Material.WOODEN_HOE)
-
 		Item.setAction { }
 	}
 
@@ -105,9 +136,9 @@ class DiamondSlot : GemSlot(Material.DIAMOND)
 	{
 	}
 
-	override fun OnBreak(player: Player, tool: RuneTool, runeBoard: RuneBoard)
+	override fun OnBreak(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent)
 	{
 	}
 
-	override fun CanPlace(player: Player, runeBoard: RuneBoard): Boolean = true
+	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean = true
 }

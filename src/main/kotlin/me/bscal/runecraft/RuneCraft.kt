@@ -1,6 +1,5 @@
 package me.bscal.runecraft
 
-import me.bscal.runecraft.custom_items.CustomItems
 import me.bscal.runecraft.custom_items.CustomItemsListener
 import net.axay.kspigot.commands.command
 import net.axay.kspigot.commands.runs
@@ -17,7 +16,7 @@ class RuneCraft : KSpigot()
 	companion object
 	{
 		lateinit var INSTANCE: RuneCraft; private set
-		lateinit var DEBUG_MODE: DebugMode private set
+		var DEBUG_MODE: DebugMode = DebugMode.DEBUG; private set
 
 		internal fun LogDebug(level: Level, msg: String)
 		{
@@ -41,6 +40,8 @@ class RuneCraft : KSpigot()
 		DEBUG_MODE = DebugMode.Match(config.getString("debug_mode"))
 		LogDebug(Level.INFO, "Starting in DEBUG mode!")
 
+		RuneTool.RegisterTools()
+
 		pluginManager.registerEvents(CustomItemsListener(), this)
 
 		listen<PlayerJoinEvent> {
@@ -49,15 +50,13 @@ class RuneCraft : KSpigot()
 
 		command("runecraft_items_test") {
 			runs {
-				player.give(RuneTool.IRON_CHISEL.Stack)
-				player.give(RuneTool.GOLD_CHISEL.Stack)
-				player.give(RuneTool.DIAMOND_CHISEL.Stack)
+				player.give(RuneTool.IRON_CHISEL.NewStack(), RuneTool.GOLD_CHISEL.NewStack(), RuneTool.DIAMOND_CHISEL.NewStack())
 			}
 		}
 
 		command("runecraft_test") {
 			runs {
-				val board = RuneBoard(Rune(RuneType.Overworld, 1, 1), LARGE_RUNE_SIZE)
+				val board = RuneBoard(Rune(RuneType.Overworld, 1, 1, 6), LARGE_RUNE_SIZE)
 				board.Generate(this.player)
 				board.Open(this.player)
 			}
