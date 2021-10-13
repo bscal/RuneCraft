@@ -7,14 +7,13 @@ import me.bscal.runecraft.custom_items.CustomItem
 import me.bscal.runecraft.custom_items.CustomItems
 import net.axay.kspigot.chat.KColors
 import net.axay.kspigot.items.*
-import net.kyori.adventure.text.TextComponent
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
-class RuneTool(val InternalName: String, val Level: Int, defaultStack: ItemStack) : CustomItem(defaultStack, true)
+class RuneTool(val InternalName: String, val Level: BreakLevel, defaultStack: ItemStack) : CustomItem(defaultStack, true)
 {
 
 	companion object
@@ -24,9 +23,9 @@ class RuneTool(val InternalName: String, val Level: Int, defaultStack: ItemStack
 		lateinit var DIAMOND_CHISEL: RuneTool; private set
 		fun RegisterTools()
 		{
-			IRON_CHISEL = RuneTool("iron_chisel", 1, CreateChisel("Iron Chisel", 11000, 16))
-			GOLD_CHISEL = RuneTool("gold_chisel", 2, CreateChisel("Gold Chisel", 11001, 16))
-			DIAMOND_CHISEL = RuneTool("diamond_chisel", 3, CreateChisel("Diamond Chisel", 11002, 32))
+			IRON_CHISEL = RuneTool("iron_chisel", BreakLevel.LEVEL_1, CreateChisel("Iron Chisel", 11000, 16))
+			GOLD_CHISEL = RuneTool("gold_chisel", BreakLevel.LEVEL_2, CreateChisel("Gold Chisel", 11001, 16))
+			DIAMOND_CHISEL = RuneTool("diamond_chisel", BreakLevel.LEVEL_3, CreateChisel("Diamond Chisel", 11002, 32))
 		}
 	}
 
@@ -79,12 +78,29 @@ class RuneTool(val InternalName: String, val Level: Int, defaultStack: ItemStack
 		{
 			for (i in 0 until lore.size)
 			{
-				if (lore[i].contains("Uses"))
-					lore[i] = "Uses: $uses"
+				if (lore[i].startsWith("Uses:")) lore[i] = "Uses: $uses"
 			}
 		}
 		meta.lore = lore
 		itemStack.itemMeta = meta
+	}
+}
+
+enum class BreakLevel(val Id: Int)
+{
+	UNBREAKABLE(0),
+	ANY(1),
+	LEVEL_1(2),
+	LEVEL_2(4),
+	LEVEL_3(8);
+
+	fun Match(level: BreakLevel, vararg allowed: BreakLevel) : Boolean
+	{
+		var mask = 0
+		allowed.forEach {
+			mask += it.Id
+		}
+		return level.Id and mask > 0
 	}
 }
 
