@@ -3,18 +3,20 @@ package me.bscal.runecraft
 import com.github.stefvanschie.inventoryframework.gui.GuiItem
 import com.github.stefvanschie.inventoryframework.gui.type.ChestGui
 import com.github.stefvanschie.inventoryframework.pane.StaticPane
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectArrayList
+import me.bscal.runecraft.stats.RuneStats
 import net.axay.kspigot.chat.KColors
-import net.axay.kspigot.items.addLore
-import net.axay.kspigot.items.itemStack
-import net.axay.kspigot.items.meta
-import net.axay.kspigot.items.name
+import net.axay.kspigot.items.*
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.inventory.ItemStack
 import java.util.*
+import java.util.logging.Level
+import kotlin.collections.ArrayList
 import kotlin.random.Random
 
 const val SMALL_RUNE_SIZE = 4 * 4
@@ -24,14 +26,30 @@ val RuneBoardCache = Object2ObjectOpenHashMap<UUID, RuneBoard>()
 
 class RuneBoard(val Rune: Rune, val Size: Int)
 {
-	lateinit var Slots: Int2ObjectOpenHashMap<BoardSlot>
+	companion object
+	{
+		// Map keys
+		//fun PackCoord(x: Int, y: Int) : Int = x or y shl 16
+		//fun UnpackCoord(key: Int) : Array<Int> = arrayOf(key shr 16, key and 0xff)
+		fun PackCoord(x: Int, y: Int): Int = (x + y * 6) //.coerceAtLeast(0).coerceAtMost(5) I leave out to find bugs
+		fun UnpackCoord(key: Int): Array<Int> = arrayOf(key % 6, key / 6)
+	}
+
+	lateinit var Slots: ObjectArrayList<BoardSlot>
 
 	private lateinit var Gui: ChestGui
 	private lateinit var RunePanel: StaticPane
 	private lateinit var StabilityIcon: GuiItem
+	private lateinit var StatsIcon: GuiItem
 	private var Generator: BoardGenerator? = null
 
-	constructor(rune: Rune, size: Int, slots: Int2ObjectOpenHashMap<BoardSlot>) : this(rune, size)
+	private val Stats by lazy {
+		RuneStats()
+	}
+	private val LineSlots: IntArrayList = IntArrayList()
+	private val LineGems: IntArrayList = IntArrayList()
+
+	constructor(rune: Rune, size: Int, slots: ObjectArrayList<BoardSlot>) : this(rune, size)
 	{
 		Slots = slots
 	}
@@ -40,7 +58,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	{
 		if (this::Slots.isInitialized) return false
 		Generator = BoardRegistry.Registry[Rune.Type] ?: BoardRegistry.Default
-		Slots = Int2ObjectOpenHashMap(Size, 1.0f)
+		Slots = ObjectArrayList<BoardSlot>(Size)
 		Generator?.Generate(player, this, Rune.Rarity)
 		return true
 	}
@@ -76,17 +94,31 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		tool.Deincremeant(itemStack)
 		RemoveItem(x, y)
 		AddItem(x, y, LineSlot(Material.WHITE_DYE))
+		Gui.update()
 		AddInstability(slot.GetInstabilityLost())
+		FindLine(x, y)
+		Update()
 	}
 
 	fun OnBuild(event: InventoryClickEvent)
 	{
 		event.isCancelled = true
+		Rune.IsBuilt = true
 	}
 
 	fun Update()
 	{
+		Rune.Power = LineSlots.size.toFloat()
 
+		GuiItems.StatsItem.item.let {
+			it.amount = Rune.Power.toInt()
+			it.meta {
+				addLore {
+					for (stat in Stats.StatMap)
+						+stat.value.GetLoreString()
+				}
+			}
+		}
 	}
 
 	fun Serialize()
@@ -97,6 +129,45 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	fun Deserialize()
 	{
 
+	}
+
+	fun FindLine(x: Int, y: Int)
+	{
+		LineSlots.clear()
+		LineGems.clear()
+		val visited = IntOpenHashSet()
+		val stack = IntArrayList()
+		stack.push(PackCoord(x, y))
+		while (!stack.isEmpty)
+		{
+			val key = stack.popInt()
+			val xy = UnpackCoord(key)
+			val xx = xy[0]
+			val yy = xy[1]
+			if (visited.contains(key) || key < 0 || key >= Size) continue
+			visited.add(key)
+
+			var skip = true
+			val slot = Slots[key]
+			if (slot is LineSlot)
+			{
+				LineSlots.add(key)
+				skip = false
+			}
+			else if (slot is GemSlot)
+			{
+				LineGems.add(key)
+				skip = true
+			}
+
+			if (skip) continue
+
+			stack.push(PackCoord(xx, yy + 1))
+			stack.push(PackCoord(xx + 1, yy))
+			stack.push(PackCoord(xx - 1, yy))
+			stack.push(PackCoord(xx, yy - 1))
+		}
+		RuneCraft.Log(Level.INFO, "Line: $LineSlots | $LineGems")
 	}
 
 	fun AddInstability(value: Int)
@@ -120,21 +191,18 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	}
 
 	fun Destroy()
-	{		// TODO
+	{        // TODO
 	}
 
 	fun RemoveItem(x: Int, y: Int)
-	{
-		Slots.remove(x or (y shl 16))
+	{		//Slots.remove(x or (y shl 16))
 		RunePanel.removeItem(x, y)
-		Gui.update()
 	}
 
 	fun AddItem(x: Int, y: Int, slot: BoardSlot)
 	{
-		Slots[x or (y shl 16)] = slot
+		Slots[PackCoord(x, y)] = slot
 		RunePanel.addItem(slot.Item, x, y)
-		Gui.update()
 	}
 
 	fun GetGuiTitle(): String = Gui.title
@@ -142,11 +210,10 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	private fun CreateRunePanel()
 	{
 		RunePanel = StaticPane(2, 0, 6, 6)
-		for (slot in Slots.int2ObjectEntrySet())
+		for (i in 0 until Slots.size)
 		{
-			val x = slot.intKey and 0xff
-			val y = slot.intKey shr 16
-			RunePanel.addItem(slot.value.Item.copy(), x, y)
+			val xy = UnpackCoord(i)
+			RunePanel.addItem(Slots[i].Item.copy(), xy[0], xy[1])
 		}
 		Gui.addPane(RunePanel)
 	}
@@ -171,7 +238,9 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		val header = StaticPane(0, 0, 1, 6)
 		header.addItem(GuiItems.HelpItem, 0, 0)
 		header.addItem(GuiItem(GuiItems.SeparatorIcon) { it.isCancelled = true }, 0, 1)
-		header.addItem(GuiItems.StatsItem.copy(), 0, 2)
+
+		StatsIcon = GuiItems.StatsItem.copy()
+		header.addItem(StatsIcon, 0, 2)
 
 		StabilityIcon = CreateStabilityItem()
 		header.addItem(StabilityIcon, 0, 3)

@@ -5,6 +5,7 @@ import org.bukkit.inventory.ItemStack
 
 class Rune(val Type: RuneType, val Rarity: Int, val Color: Int, var Instability : Int)
 {
+	var Power: Float = 0f
 	var IsGenerated: Boolean = false
 	var IsBuilt: Boolean = false
 

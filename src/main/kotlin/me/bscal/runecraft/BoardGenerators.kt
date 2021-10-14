@@ -14,8 +14,8 @@ object BoardRegistry
 
 	init
 	{
-		Registry.put(RuneType.Default, Default)
-		Registry.put(RuneType.Overworld, OverworldBoard())
+		Registry[RuneType.Default] = Default
+		Registry[RuneType.Overworld] = OverworldBoard()
 	}
 
 }
@@ -42,21 +42,11 @@ class OverworldBoard : BaseBoardGenerator(8)
 {
 	override fun GenerateBase(player: Player, board: RuneBoard, rarity: Int)
 	{
-		var x = 0
-		var y = 0
 		for (i in 0 until board.Size)
 		{
-			val key = x or (y shl 16)
-
-			if (y < 2 && Random.nextInt(1, 6) > 2) board.Slots[key] = DirtSlot(y < 1)
-			else board.Slots[key] = BaseSlot
-
-			x++
-			if (x > 5)
-			{
-				x = 0
-				y++
-			}
+			val y = i / 6
+			if (y < 2 && Random.nextFloat() > .25f) board.Slots.add(i, DirtSlot(y < 1))
+			else board.Slots.add(i, BaseSlot)
 		}
 	}
 
@@ -66,10 +56,10 @@ class OverworldBoard : BaseBoardGenerator(8)
 
 		val decided = IntOpenHashSet(board.Slots.size, 1.0f)
 
-		var bedrockCount = Random.nextInt(2, 5)
+		var bedrockCount = Random.nextInt(2, 4)
 		while (bedrockCount > 0)
 		{
-			val key = Random.nextInt(6) or (Random.nextInt(6) shl 16)
+			val key = RuneBoard.PackCoord(Random.nextInt(5), Random.nextInt(5))
 			if (!decided.contains(key))
 			{
 				decided.add(key)
@@ -81,7 +71,7 @@ class OverworldBoard : BaseBoardGenerator(8)
 		var gemCount = Random.nextInt(2, 3)
 		while (gemCount > 0)
 		{
-			val key = Random.nextInt(6) or (Random.nextInt(6) shl 16)
+			val key = RuneBoard.PackCoord(Random.nextInt(5), Random.nextInt(5))
 			if (!decided.contains(key))
 			{
 				decided.add(key)

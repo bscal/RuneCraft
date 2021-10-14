@@ -56,9 +56,15 @@ class RuneCraft : KSpigot()
 
 		command("runecraft_test") {
 			runs {
-				val board = RuneBoard(Rune(RuneType.Overworld, 1, 1, 6), LARGE_RUNE_SIZE)
-				board.Generate(this.player)
-				board.Open(this.player)
+				try
+				{
+					val board = RuneBoard(Rune(RuneType.Overworld, 1, 1, 2), LARGE_RUNE_SIZE)
+					board.Generate(this.player)
+					board.Open(this.player)
+				}
+				catch(e: Exception) {
+					e.printStackTrace()
+				}
 			}
 		}
 	}

@@ -40,7 +40,7 @@ abstract class BoardSlot(val Item: GuiItem, val InstabilityLost: Int, val BreakL
 		{
 			val x = 5.coerceAtMost(0.coerceAtLeast(it.slot % 9 - 2))
 			val y = it.slot / 9
-			val key = x or (y shl 16)
+			val key = RuneBoard.PackCoord(x, y)
 
 			val board = RuneBoardCache[it.whoClicked.uniqueId] ?: return
 			if (!board.GetGuiTitle().equals(it.view.title)) return
@@ -125,7 +125,7 @@ class BedrockSlot : BoardSlot(GuiItem(ItemStack(Material.BEDROCK)), 0, BreakLeve
 }
 
 class DirtSlot(val IsGrass: Boolean) :
-	BoardSlot(GuiItem(ItemStack(if (IsGrass) Material.GRASS_BLOCK else Material.DIRT)), 1, BreakLevel.ANY)
+	BoardSlot(GuiItem(ItemStack(if (IsGrass) Material.GRASS_BLOCK else Material.DIRT)), 0, BreakLevel.ANY)
 {
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
 	{
@@ -140,7 +140,11 @@ class DirtSlot(val IsGrass: Boolean) :
 }
 
 abstract class GemSlot(material: Material) : BoardSlot(GuiItem(ItemStack(material)), 0, BreakLevel.UNBREAKABLE)
-{}
+{
+
+	abstract fun GetLoreStats() : String
+
+}
 
 class DiamondSlot : GemSlot(Material.DIAMOND)
 {
@@ -154,6 +158,11 @@ class DiamondSlot : GemSlot(Material.DIAMOND)
 			}
 		}
 		Item.setAction { }
+	}
+
+	override fun GetLoreStats(): String
+	{
+		return  ""
 	}
 
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
