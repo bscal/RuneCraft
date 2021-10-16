@@ -8,15 +8,16 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import me.bscal.runecraft.stats.RuneStats
+import me.bscal.runecraft.stats.addStat
 import net.axay.kspigot.chat.KColors
 import net.axay.kspigot.items.*
+import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.inventory.ItemStack
 import java.util.*
 import java.util.logging.Level
-import kotlin.collections.ArrayList
 import kotlin.random.Random
 
 const val SMALL_RUNE_SIZE = 4 * 4
@@ -94,10 +95,10 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		tool.Deincremeant(itemStack)
 		RemoveItem(x, y)
 		AddItem(x, y, LineSlot(Material.WHITE_DYE))
-		Gui.update()
 		AddInstability(slot.GetInstabilityLost())
 		FindLine(x, y)
 		Update()
+		Gui.update()
 	}
 
 	fun OnBuild(event: InventoryClickEvent)
@@ -109,16 +110,31 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	fun Update()
 	{
 		Rune.Power = LineSlots.size.toFloat()
+		UpdateBoardSlots()
+		UpdateStats()
+	}
 
-		GuiItems.StatsItem.item.let {
-			it.amount = Rune.Power.toInt()
-			it.meta {
-				addLore {
-					for (stat in Stats.StatMap)
-						+stat.value.GetLoreString()
+	private fun UpdateStats()
+	{
+		LineGems.forEach {
+			val slot = Slots[it] as GemSlot
+			slot.Stats.forEach { stat ->
+				Stats.StatsSet.addStat(stat)
+			}
+		}
+
+		StatsIcon.item.amount = Rune.Power.toInt()
+		StatsIcon.item.editMeta {
+			it.setLore {
+				Stats.StatsSet.forEach { stat ->
+					+stat.GetLoreString()
 				}
 			}
 		}
+	}
+
+	fun UpdateBoardSlots()
+	{
 	}
 
 	fun Serialize()

@@ -2,6 +2,8 @@ package me.bscal.runecraft
 
 import com.github.stefvanschie.inventoryframework.gui.GuiItem
 import me.bscal.runecraft.custom_items.CustomItems
+import me.bscal.runecraft.stats.Stat
+import me.bscal.runecraft.stats.VanillaStat
 import net.axay.kspigot.chat.KColors
 import net.axay.kspigot.items.addLore
 import net.axay.kspigot.items.itemStack
@@ -9,6 +11,8 @@ import net.axay.kspigot.items.meta
 import net.axay.kspigot.items.name
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
+import org.bukkit.attribute.Attribute
+import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
 import org.bukkit.event.Event
 import org.bukkit.event.inventory.InventoryClickEvent
@@ -141,8 +145,11 @@ class DirtSlot(val IsGrass: Boolean) :
 
 abstract class GemSlot(material: Material) : BoardSlot(GuiItem(ItemStack(material)), 0, BreakLevel.UNBREAKABLE)
 {
+	val Stats: List<Stat> by lazy {
+		LazyStatInitilizer()
+	}
 
-	abstract fun GetLoreStats() : String
+	protected abstract fun LazyStatInitilizer(): List<Stat>
 
 }
 
@@ -153,16 +160,17 @@ class DiamondSlot : GemSlot(Material.DIAMOND)
 		Item.item.meta {
 			name = "${KColors.LIGHTSKYBLUE}Diamond Gem"
 			addLore {
-				Component.text("${KColors.GREEN}+ 5% Durability")
-				Component.text("${KColors.GREEN}+ .25 Attack Damage")
+				Stats.forEach {
+					+it.GetLoreString()
+				}
 			}
 		}
-		Item.setAction { }
 	}
 
-	override fun GetLoreStats(): String
+	override fun LazyStatInitilizer(): List<Stat>
 	{
-		return  ""
+		return listOf<Stat>(VanillaStat("Health", KColors.GREEN, Attribute.GENERIC_MAX_HEALTH,
+			AttributeModifier("Health", 1.0, AttributeModifier.Operation.ADD_NUMBER)))
 	}
 
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
