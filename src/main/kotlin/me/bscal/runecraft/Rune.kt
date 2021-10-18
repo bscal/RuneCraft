@@ -11,9 +11,6 @@ class Rune(val Type: RuneType, val Rarity: Int, val Color: Int, var Instability 
 
 	private var Board: RuneBoard? = null
 
-	companion object {
-	}
-
 	fun Generate(player: Player) : Boolean
 	{
 		return Board?.Generate(player) ?: false

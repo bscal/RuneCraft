@@ -11,10 +11,14 @@ import me.bscal.runecraft.stats.RuneStats
 import me.bscal.runecraft.stats.addStat
 import net.axay.kspigot.chat.KColors
 import net.axay.kspigot.items.*
+import net.axay.kspigot.sound.sound
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
+import org.bukkit.Sound
+import org.bukkit.SoundCategory
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.ItemStack
 import java.util.*
 import java.util.logging.Level
@@ -38,11 +42,12 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 
 	lateinit var Slots: ObjectArrayList<BoardSlot>
 
-	private lateinit var Gui: ChestGui
+	private var Gui: ChestGui? = null
+	private var Generator: BoardGenerator? = null
 	private lateinit var RunePanel: StaticPane
 	private lateinit var StabilityIcon: GuiItem
 	private lateinit var StatsIcon: GuiItem
-	private var Generator: BoardGenerator? = null
+	private lateinit var Player: Player
 
 	private val Stats by lazy {
 		RuneStats()
@@ -66,23 +71,27 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 
 	fun Open(player: Player)
 	{
-		if (this::Gui.isInitialized) Gui.show(player)
+		Player = player
 
-		Generate(player)
-		Gui = ChestGui(6, "${KColors.RED}RuneCraft")
-		Gui.setOnClose {
-			RuneBoardCache.remove(player.uniqueId, this)
+		if (Gui == null)
+		{
+			Generate(player)
+			Gui = ChestGui(6, "${KColors.RED}RuneCraft")
+			Gui?.setOnClose {
+				RuneBoardCache.remove(player.uniqueId, this)
+			}
+			Gui?.setOnTopClick {
+				it.isCancelled = true
+			}
+
+			CreateHeaderPanel()
+			CreateSeparatorPanel()
+			CreateRunePanel()
+
+			RuneBoardCache[player.uniqueId] = this
+			Gui?.show(player)
 		}
-		Gui.setOnTopClick {
-			it.isCancelled = true
-		}
-
-		CreateHeaderPanel()
-		CreateSeparatorPanel()
-		CreateRunePanel()
-
-		RuneBoardCache[player.uniqueId] = this
-		Gui.show(player)
+		else Gui?.show(player)
 	}
 
 	fun CanBreak(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean
@@ -92,13 +101,15 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 
 	fun OnBreak(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent)
 	{
+		itemStack.durability
 		tool.Deincremeant(itemStack)
 		RemoveItem(x, y)
-		AddItem(x, y, LineSlot(Material.WHITE_DYE))
+		AddItem(x, y, LineSlot(Material.WHITE_CONCRETE))
 		AddInstability(slot.GetInstabilityLost())
 		FindLine(x, y)
 		Update()
-		Gui.update()
+
+		Gui?.update()
 	}
 
 	fun OnBuild(event: InventoryClickEvent)
@@ -207,11 +218,20 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	}
 
 	fun Destroy()
-	{        // TODO
+	{
+		Player.closeInventory(InventoryCloseEvent.Reason.PLAYER)
+		Gui = null
+		// TODO destroy item
+		Player.sound(Sound.ENTITY_GENERIC_EXPLODE) {
+			category = SoundCategory.AMBIENT
+			volume = .5f
+			pitch = .5f
+		}
+		Player.sendMessage(Component.text("${KColors.RED}Your rune exploded because it's instability was too high."))
 	}
 
 	fun RemoveItem(x: Int, y: Int)
-	{		//Slots.remove(x or (y shl 16))
+	{        //Slots.remove(x or (y shl 16))
 		RunePanel.removeItem(x, y)
 	}
 
@@ -221,7 +241,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		RunePanel.addItem(slot.Item, x, y)
 	}
 
-	fun GetGuiTitle(): String = Gui.title
+	fun GetGuiTitle(): String = Gui?.title ?: "NULL"
 
 	private fun CreateRunePanel()
 	{
@@ -231,7 +251,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 			val xy = UnpackCoord(i)
 			RunePanel.addItem(Slots[i].Item.copy(), xy[0], xy[1])
 		}
-		Gui.addPane(RunePanel)
+		Gui?.addPane(RunePanel)
 	}
 
 	private fun CreateSeparatorPanel()
@@ -240,13 +260,13 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		leftSeparator.fillWith(GuiItems.SeparatorIcon) {
 			it.isCancelled = true
 		}
-		Gui.addPane(leftSeparator)
+		Gui?.addPane(leftSeparator)
 
 		val rightSeparator = StaticPane(8, 0, 1, 6)
 		rightSeparator.fillWith(GuiItems.SeparatorIcon) {
 			it.isCancelled = true
 		}
-		Gui.addPane(rightSeparator)
+		Gui?.addPane(rightSeparator)
 	}
 
 	private fun CreateHeaderPanel()
@@ -262,7 +282,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		header.addItem(StabilityIcon, 0, 3)
 		header.addItem(GuiItem(GuiItems.SeparatorIcon) { it.isCancelled = true }, 0, 4)
 		header.addItem(CreateBuildItem(), 0, 5)
-		Gui.addPane(header)
+		Gui?.addPane(header)
 	}
 
 	private fun CreateStabilityItem(): GuiItem
