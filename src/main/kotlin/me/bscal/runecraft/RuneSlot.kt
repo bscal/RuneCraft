@@ -6,7 +6,6 @@ import me.bscal.runecraft.stats.Stat
 import me.bscal.runecraft.stats.VanillaStat
 import net.axay.kspigot.chat.KColors
 import net.axay.kspigot.items.addLore
-import net.axay.kspigot.items.itemStack
 import net.axay.kspigot.items.meta
 import net.axay.kspigot.items.name
 import net.kyori.adventure.text.Component
@@ -18,9 +17,12 @@ import org.bukkit.event.Event
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
+import java.io.Serializable
 
-interface IBoardSlot
+interface IBoardSlot : Serializable
 {
+	fun GetGuiItem(): GuiItem
+
 	fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
 
 	fun OnBreak(x: Int, y: Int, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent)
@@ -30,14 +32,17 @@ interface IBoardSlot
 	fun GetInstabilityLost(): Int
 }
 
-abstract class BoardSlot(val Item: GuiItem, val InstabilityLost: Int, val BreakLevel: BreakLevel) : IBoardSlot
+abstract class BoardSlot(val MaterialType: Material, val InstabilityLost: Int, val BreakLevel: BreakLevel) : IBoardSlot
 {
+	@Transient
+	val Item: GuiItem = GuiItem(ItemStack(MaterialType))
+
 	init
 	{
-		Item.setAction(::HandleClick)
+		Item.setAction(::OnClick)
 	}
 
-	private fun HandleClick(it: InventoryClickEvent)
+	private fun OnClick(it: InventoryClickEvent)
 	{
 		it.result = Event.Result.DENY
 		if (it.clickedInventory != null && it.clickedInventory?.type == InventoryType.CHEST && it.isLeftClick)
@@ -45,33 +50,38 @@ abstract class BoardSlot(val Item: GuiItem, val InstabilityLost: Int, val BreakL
 			val x = 5.coerceAtMost(0.coerceAtLeast(it.slot % 9 - 2))
 			val y = it.slot / 9
 			val key = RuneBoard.PackCoord(x, y)
-
-			val board = RuneBoardCache[it.whoClicked.uniqueId] ?: return
-			if (!board.GetGuiTitle().equals(it.view.title)) return
-
-			val tool: ItemStack = it.cursor ?: ItemStack(Material.AIR)
-			val customItem = CustomItems.GetByItemstack(tool) ?: return
-			if (customItem is RuneTool)
+			val board = RuneBoardCache[it.whoClicked.uniqueId]
+			if (board != null && board.GetGuiTitle().equals(it.view.title))
 			{
-				val slot = board.Slots[key]
-				if (board.CanBreak(x, y, slot, tool, customItem, it))
+				val tool: ItemStack = it.cursor ?: ItemStack(Material.AIR)
+				val customItem = CustomItems.GetByItemstack(tool)
+				if (customItem is RuneTool)
 				{
-					slot.OnBreak(x, y, tool, customItem, it)
-					board.OnBreak(x, y, slot, tool, customItem, it)
+					val slot = board.Slots[key]
+					if (board.CanBreak(x, y, slot, tool, customItem, it))
+					{
+						slot.OnBreak(x, y, tool, customItem, it)
+						board.OnBreak(x, y, slot, tool, customItem, it)
+					}
 				}
 			}
 		}
 	}
 
+	override fun GetGuiItem(): GuiItem = Item
+
 	override fun GetInstabilityLost(): Int = InstabilityLost
 }
 
-class LineSlot(material: Material) : BoardSlot(GuiItem(itemStack(material) {
-	meta {
-		name = "${KColors.LIGHTGRAY}Rune Line"
-	}
-}), 0, BreakLevel.UNBREAKABLE)
+class LineSlot(materialType: Material) : BoardSlot(materialType, 0, BreakLevel.UNBREAKABLE)
 {
+	init
+	{
+		Item.item.editMeta {
+			it.name = "${KColors.LIGHTGRAY}Rune Line"
+		}
+	}
+
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
 	{
 	}
@@ -85,8 +95,7 @@ class LineSlot(material: Material) : BoardSlot(GuiItem(itemStack(material) {
 
 }
 
-class DefaultSlot(material: Material, stabilityLost: Int, breakLevel: BreakLevel) :
-	BoardSlot(GuiItem(ItemStack(material)), stabilityLost, breakLevel)
+class DefaultSlot(material: Material, stabilityLost: Int, breakLevel: BreakLevel) : BoardSlot(material, stabilityLost, breakLevel)
 {
 	init
 	{
@@ -107,7 +116,7 @@ class DefaultSlot(material: Material, stabilityLost: Int, breakLevel: BreakLevel
 	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean = true
 }
 
-class BedrockSlot : BoardSlot(GuiItem(ItemStack(Material.BEDROCK)), 0, BreakLevel.UNBREAKABLE)
+class BedrockSlot : BoardSlot(Material.BEDROCK, 0, BreakLevel.UNBREAKABLE)
 {
 	init
 	{
@@ -128,9 +137,15 @@ class BedrockSlot : BoardSlot(GuiItem(ItemStack(Material.BEDROCK)), 0, BreakLeve
 		false
 }
 
-class DirtSlot(val IsGrass: Boolean) :
-	BoardSlot(GuiItem(ItemStack(if (IsGrass) Material.GRASS_BLOCK else Material.DIRT)), 0, BreakLevel.ANY)
+class DirtSlot(isGrass: Boolean) : BoardSlot(if (isGrass) Material.GRASS_BLOCK else Material.DIRT, 0, BreakLevel.ANY)
 {
+	init
+	{
+		val lore = ArrayList<Component>()
+		lore.add(Component.text("${KColors.RED}-1 Stability"))
+		Item.item.lore(lore)
+	}
+
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
 	{
 	}
@@ -143,8 +158,9 @@ class DirtSlot(val IsGrass: Boolean) :
 
 }
 
-abstract class GemSlot(material: Material) : BoardSlot(GuiItem(ItemStack(material)), 0, BreakLevel.UNBREAKABLE)
+abstract class GemSlot(material: Material) : BoardSlot(material, 0, BreakLevel.UNBREAKABLE)
 {
+	@delegate:Transient
 	val Stats: List<Stat> by lazy {
 		LazyStatInitilizer()
 	}

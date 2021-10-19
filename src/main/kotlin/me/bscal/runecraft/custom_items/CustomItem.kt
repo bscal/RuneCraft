@@ -8,19 +8,30 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.ItemStack
+import java.util.function.Consumer
 import java.util.logging.Level
 
 @JvmRecord data class CustomId(val Type: Material, val ModelId: Int)
 
-abstract class CustomItem(val DefaultStack: ItemStack, val Cancel: Boolean)
+abstract class CustomItem(val DefaultStack: ItemStack, val Cancel: Boolean, val InteractCallback: Consumer<PlayerInteractEvent>? = null)
 {
-	fun NewStack() : ItemStack = DefaultStack.clone()
+	open fun NewStack(): ItemStack
+	{
+		return DefaultStack.clone()
+	}
 }
 
 object CustomItems
 {
 	private val Items = Object2ObjectOpenHashMap<String, CustomItem>()
 	private val ItemsById = Object2ObjectOpenHashMap<CustomId, CustomItem>()
+
+	fun Register(internalName: String, item: CustomItem)
+	{
+		Items[internalName] = item
+		ItemsById[CustomId(item.DefaultStack.type, item.DefaultStack.itemMeta.customModelData)] = item
+		RuneCraft.LogDebug(Level.INFO, "Registering item: $internalName, $item")
+	}
 
 	fun Register(internalName: String, customId: CustomId, item: CustomItem)
 	{
@@ -39,7 +50,7 @@ object CustomItems
 		return ItemsById[customId]
 	}
 
-	fun GetByItemstack(itemStack: ItemStack) : CustomItem?
+	fun GetByItemstack(itemStack: ItemStack): CustomItem?
 	{
 		if (!itemStack.hasItemMeta()) return null
 		return GetById(CustomId(itemStack.type, itemStack.itemMeta.customModelData))
@@ -59,6 +70,7 @@ class CustomItemsListener : Listener
 			if (customItem != null)
 			{
 				if (customItem.Cancel) event.isCancelled = true
+				customItem.InteractCallback?.accept(event)
 			}
 		}
 	}

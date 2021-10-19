@@ -41,6 +41,7 @@ class RuneCraft : KSpigot()
 		LogDebug(Level.INFO, "Starting in DEBUG mode!")
 
 		RuneTool.RegisterTools()
+		RegisterRuneCustomItems()
 
 		pluginManager.registerEvents(CustomItemsListener(), this)
 
@@ -58,9 +59,7 @@ class RuneCraft : KSpigot()
 			runs {
 				try
 				{
-					val board = RuneBoard(Rune(RuneType.Overworld, 1, 1, 2), LARGE_RUNE_SIZE)
-					board.Generate(this.player)
-					board.Open(this.player)
+					player.give(UncarvedRune.NewStack(Rune(RuneType.Overworld)))
 				}
 				catch(e: Exception) {
 					e.printStackTrace()

@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
+import kotlinx.serialization.Serializable
 import me.bscal.runecraft.stats.RuneStats
 import me.bscal.runecraft.stats.addStat
 import net.axay.kspigot.chat.KColors
@@ -22,6 +23,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.ItemStack
 import java.util.*
 import java.util.logging.Level
+import kotlin.collections.ArrayList
 import kotlin.random.Random
 
 const val SMALL_RUNE_SIZE = 4 * 4
@@ -40,7 +42,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		fun UnpackCoord(key: Int): Array<Int> = arrayOf(key % 6, key / 6)
 	}
 
-	lateinit var Slots: ObjectArrayList<BoardSlot>
+	var Slots: ArrayList<BoardSlot> = ArrayList(Size)
 
 	private var Gui: ChestGui? = null
 	private var Generator: BoardGenerator? = null
@@ -48,37 +50,33 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	private lateinit var StabilityIcon: GuiItem
 	private lateinit var StatsIcon: GuiItem
 	private lateinit var Player: Player
+	private lateinit var RuneItemStack: ItemStack
 
-	private val Stats by lazy {
+	val Stats by lazy {
 		RuneStats()
 	}
 	private val LineSlots: IntArrayList = IntArrayList()
 	private val LineGems: IntArrayList = IntArrayList()
 
-	constructor(rune: Rune, size: Int, slots: ObjectArrayList<BoardSlot>) : this(rune, size)
-	{
-		Slots = slots
-	}
-
 	fun Generate(player: Player): Boolean
 	{
-		if (this::Slots.isInitialized) return false
+		if (Rune.IsGenerated) return false
 		Generator = BoardRegistry.Registry[Rune.Type] ?: BoardRegistry.Default
-		Slots = ObjectArrayList<BoardSlot>(Size)
 		Generator?.Generate(player, this, Rune.Rarity)
 		return true
 	}
 
-	fun Open(player: Player)
+	fun Open(player: Player, runeItemStack: ItemStack)
 	{
 		Player = player
-
+		RuneItemStack = runeItemStack
 		if (Gui == null)
 		{
 			Generate(player)
 			Gui = ChestGui(6, "${KColors.RED}RuneCraft")
 			Gui?.setOnClose {
 				RuneBoardCache.remove(player.uniqueId, this)
+				Rune.Serialize(runeItemStack)
 			}
 			Gui?.setOnTopClick {
 				it.isCancelled = true
@@ -219,9 +217,9 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 
 	fun Destroy()
 	{
+		RuneItemStack.amount = RuneItemStack.amount - 1
 		Player.closeInventory(InventoryCloseEvent.Reason.PLAYER)
 		Gui = null
-		// TODO destroy item
 		Player.sound(Sound.ENTITY_GENERIC_EXPLODE) {
 			category = SoundCategory.AMBIENT
 			volume = .5f
