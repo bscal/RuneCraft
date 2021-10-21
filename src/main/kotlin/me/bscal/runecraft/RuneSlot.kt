@@ -17,6 +17,8 @@ import org.bukkit.event.Event
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
+import java.io.IOException
+import java.io.ObjectInputStream
 import java.io.Serializable
 
 interface IBoardSlot : Serializable
@@ -32,13 +34,21 @@ interface IBoardSlot : Serializable
 	fun GetInstabilityLost(): Int
 }
 
-abstract class BoardSlot(val MaterialType: Material, val InstabilityLost: Int, val BreakLevel: BreakLevel) : IBoardSlot
+abstract class BoardSlot(val MaterialType: Material, val InstabilityLost: Int, val BreakLevel: BreakLevel) : IBoardSlot, Serializable
 {
-	@Transient
-	val Item: GuiItem = GuiItem(ItemStack(MaterialType))
+	@Transient var Item: GuiItem; protected set
 
 	init
 	{
+		Item = GuiItem(ItemStack(MaterialType))
+		Item.setAction(::OnClick)
+	}
+
+	@Throws(IOException::class, ClassNotFoundException::class)
+	private fun readObject(objIn: ObjectInputStream)
+	{
+		objIn.defaultReadObject()
+		Item = GuiItem(ItemStack(MaterialType))
 		Item.setAction(::OnClick)
 	}
 
@@ -95,7 +105,7 @@ class LineSlot(materialType: Material) : BoardSlot(materialType, 0, BreakLevel.U
 
 }
 
-class DefaultSlot(material: Material, stabilityLost: Int, breakLevel: BreakLevel) : BoardSlot(material, stabilityLost, breakLevel)
+class DefaultSlot(materialType: Material, stabilityLost: Int, breakLevel: BreakLevel) : BoardSlot(materialType, stabilityLost, breakLevel)
 {
 	init
 	{
@@ -160,10 +170,7 @@ class DirtSlot(isGrass: Boolean) : BoardSlot(if (isGrass) Material.GRASS_BLOCK e
 
 abstract class GemSlot(material: Material) : BoardSlot(material, 0, BreakLevel.UNBREAKABLE)
 {
-	@delegate:Transient
-	val Stats: List<Stat> by lazy {
-		LazyStatInitilizer()
-	}
+	@delegate:Transient val Stats: List<Stat> by lazy(::LazyStatInitilizer)
 
 	protected abstract fun LazyStatInitilizer(): List<Stat>
 

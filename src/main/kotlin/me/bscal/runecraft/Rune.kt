@@ -2,6 +2,7 @@ package me.bscal.runecraft
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
@@ -24,7 +25,6 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.util.*
 import java.util.logging.Level
-import kotlin.collections.ArrayList
 
 class RuneBoardTagType : PersistentDataType<ByteArray, Array<BoardSlot>>
 {
@@ -33,7 +33,7 @@ class RuneBoardTagType : PersistentDataType<ByteArray, Array<BoardSlot>>
 	override fun getComplexType(): Class<Array<BoardSlot>> = Array<BoardSlot>::class.java
 
 	override fun toPrimitive(complex: Array<BoardSlot>, context: PersistentDataAdapterContext): ByteArray
-	{
+	{    //	return ProtoBuf.encodeToByteArray(complex)
 		val byte = ByteArrayOutputStream()
 		val obj = ObjectOutputStream(byte)
 		obj.writeObject(complex)
@@ -41,7 +41,7 @@ class RuneBoardTagType : PersistentDataType<ByteArray, Array<BoardSlot>>
 	}
 
 	override fun fromPrimitive(primitive: ByteArray, context: PersistentDataAdapterContext): Array<BoardSlot>
-	{
+	{        //return ProtoBuf.decodeFromByteArray(primitive)
 		val byte = ByteArrayInputStream(primitive)
 		val obj = ObjectInputStream(byte)
 		return obj.readObject() as Array<BoardSlot>
@@ -69,8 +69,8 @@ class RuneItemTagType : PersistentDataType<ByteArray, Rune>
 {
 	companion object
 	{
-		@Transient val RuneKey = NamespacedKey(RuneCraft.INSTANCE, "rune_data")
-		@Transient val BoardSlotKey = NamespacedKey(RuneCraft.INSTANCE, "board_slot_data")
+		val RuneKey = NamespacedKey(RuneCraft.INSTANCE, "rune_data")
+		val BoardSlotKey = NamespacedKey(RuneCraft.INSTANCE, "board_slot_data")
 
 		fun Deserialize(itemStack: ItemStack): Rune?
 		{
@@ -79,10 +79,10 @@ class RuneItemTagType : PersistentDataType<ByteArray, Rune>
 				val meta = itemStack.itemMeta
 				val rune = meta.persistentDataContainer.get(RuneKey, RuneItemTagType())
 				val board = meta.persistentDataContainer.get(BoardSlotKey, RuneBoardTagType())
-				if (board != null && board.isNotEmpty()) rune?.SetSlots(board.toList() as ArrayList<BoardSlot> /* = java.util.ArrayList<me.bscal.runecraft.BoardSlot> */)
-				//val slotBuffer = meta.persistentDataContainer.get(BoardSlotKey, PersistentDataType.BYTE_ARRAY)
+				if (board != null && board.isNotEmpty()) rune?.SetSlots(
+					board.toList() as ArrayList<BoardSlot> /* = java.util.ArrayList<me.bscal.runecraft.BoardSlot> */)                //val slotBuffer = meta.persistentDataContainer.get(BoardSlotKey, PersistentDataType.BYTE_ARRAY)
 				//if (slotBuffer != null) {
-					//rune?.SetSlots(ProtoBuf.decodeFromByteArray(slotBuffer))
+				//rune?.SetSlots(ProtoBuf.decodeFromByteArray(slotBuffer))
 				//}
 				return rune
 			}
@@ -97,9 +97,8 @@ class RuneItemTagType : PersistentDataType<ByteArray, Rune>
 	var IsGenerated: Boolean = false
 	var IsBuilt: Boolean = false
 
-	val Board: RuneBoard by lazy {
-		RuneBoard(this, LARGE_RUNE_SIZE)
-	}
+	@Transient
+	val Board: RuneBoard = RuneBoard(this, LARGE_RUNE_SIZE)
 
 	fun Open(player: Player, runeItemStack: ItemStack)
 	{        // TODO
@@ -136,9 +135,8 @@ class RuneItemTagType : PersistentDataType<ByteArray, Rune>
 {
 	companion object
 	{
-		@Transient val Overworld = RuneType("Overworld")
-
-		@Transient val Default = Overworld
+		val Overworld = RuneType("Overworld")
+		val Default = Overworld
 	}
 }
 
