@@ -1,6 +1,7 @@
 package me.bscal.runecraft
 
-import me.bscal.runecraft.custom_items.CustomItemsListener
+import me.bscal.runecraft.items.customitems.CustomItemsListener
+import me.bscal.runecraft.items.runeitems.RuneCraftItems
 import net.axay.kspigot.commands.command
 import net.axay.kspigot.commands.runs
 import net.axay.kspigot.event.listen
@@ -40,8 +41,7 @@ class RuneCraft : KSpigot()
 		DEBUG_MODE = DebugMode.Match(config.getString("debug_mode"))
 		LogDebug(Level.INFO, "Starting in DEBUG mode!")
 
-		RuneTool.RegisterTools()
-		RegisterRuneCustomItems()
+		RuneCraftItems.RegisterRuneCustomItems()
 
 		pluginManager.registerEvents(CustomItemsListener(), this)
 
@@ -51,7 +51,7 @@ class RuneCraft : KSpigot()
 
 		command("runecraft_items_test") {
 			runs {
-				player.give(RuneTool.IRON_CHISEL.NewStack(), RuneTool.GOLD_CHISEL.NewStack(), RuneTool.DIAMOND_CHISEL.NewStack())
+				player.give(RuneCraftItems.IRON_CHISEL.NewStack(), RuneCraftItems.GOLD_CHISEL.NewStack(), RuneCraftItems.DIAMOND_CHISEL.NewStack())
 			}
 		}
 
@@ -59,7 +59,7 @@ class RuneCraft : KSpigot()
 			runs {
 				try
 				{
-					player.give(UncarvedRune.NewStack(Rune(RuneType.Overworld)))
+					player.give(RuneCraftItems.UNCARVED_RUNE.NewStack(Rune(RuneType.Overworld)))
 				}
 				catch(e: Exception) {
 					e.printStackTrace()

@@ -1,7 +1,11 @@
 package me.bscal.runecraft
 
 import com.github.stefvanschie.inventoryframework.gui.GuiItem
-import me.bscal.runecraft.custom_items.CustomItems
+import me.bscal.runecraft.gui.RuneBoard
+import me.bscal.runecraft.gui.RuneBoardCache
+import me.bscal.runecraft.items.customitems.CustomItems
+import me.bscal.runecraft.items.runeitems.BreakLevel
+import me.bscal.runecraft.items.runeitems.RuneTool
 import me.bscal.runecraft.stats.Stat
 import me.bscal.runecraft.stats.VanillaStat
 import net.axay.kspigot.chat.KColors

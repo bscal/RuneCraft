@@ -1,4 +1,4 @@
-package me.bscal.runecraft.custom_items
+package me.bscal.runecraft.items.customitems
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import me.bscal.runecraft.RuneCraft
