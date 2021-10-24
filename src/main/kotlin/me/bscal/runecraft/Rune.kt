@@ -5,6 +5,7 @@ import kotlinx.serialization.Transient
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
+import me.bscal.runecraft.gui.BoardSlot
 import me.bscal.runecraft.gui.LARGE_RUNE_SIZE
 import me.bscal.runecraft.gui.RuneBoard
 import net.axay.kspigot.items.*
@@ -35,7 +36,7 @@ import java.util.logging.Level
 				val rune = meta.persistentDataContainer.get(RuneKey, RuneItemTagType())
 				val board = meta.persistentDataContainer.get(BoardSlotKey, RuneBoardTagType())
 				if (board != null && board.isNotEmpty()) rune?.SetSlots(
-					board.toList() as ArrayList<BoardSlot> /* = java.util.ArrayList<me.bscal.runecraft.BoardSlot> */)                //val slotBuffer = meta.persistentDataContainer.get(BoardSlotKey, PersistentDataType.BYTE_ARRAY)
+					board.toList() as ArrayList<BoardSlot> /* = java.util.ArrayList<me.bscal.runecraft.gui.BoardSlot> */)                //val slotBuffer = meta.persistentDataContainer.get(BoardSlotKey, PersistentDataType.BYTE_ARRAY)
 				//if (slotBuffer != null) {
 				//rune?.SetSlots(ProtoBuf.decodeFromByteArray(slotBuffer))
 				//}

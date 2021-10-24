@@ -1,6 +1,6 @@
 package me.bscal.runecraft
 
-import me.bscal.runecraft.items.customitems.CustomItemsListener
+import me.bscal.runecraft.items.customitems.CustomItemListener
 import me.bscal.runecraft.items.runeitems.RuneCraftItems
 import net.axay.kspigot.commands.command
 import net.axay.kspigot.commands.runs
@@ -43,7 +43,7 @@ class RuneCraft : KSpigot()
 
 		RuneCraftItems.RegisterRuneCustomItems()
 
-		pluginManager.registerEvents(CustomItemsListener(), this)
+		pluginManager.registerEvents(CustomItemListener(), this)
 
 		listen<PlayerJoinEvent> {
 			it.player.setResourcePack("https://www.dropbox.com/sh/5edb0094fafinn8/AADwGI1clZVKyf78iAsETpB8a?dl=1")

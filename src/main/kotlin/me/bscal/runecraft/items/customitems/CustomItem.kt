@@ -55,23 +55,5 @@ object CustomItems
 		if (!itemStack.hasItemMeta()) return null
 		return GetById(CustomId(itemStack.type, itemStack.itemMeta.customModelData))
 	}
-}
 
-class CustomItemsListener : Listener
-{
-	@EventHandler(priority = EventPriority.HIGH)
-	fun OnPlayerInteract(event: PlayerInteractEvent)
-	{
-		val item = event.item
-		if (item?.hasItemMeta() == true)
-		{
-			val id = CustomId(item.type, item.itemMeta.customModelData)
-			val customItem = CustomItems.GetById(id)
-			if (customItem != null)
-			{
-				if (customItem.Cancel) event.isCancelled = true
-				customItem.InteractCallback?.accept(event)
-			}
-		}
-	}
 }
