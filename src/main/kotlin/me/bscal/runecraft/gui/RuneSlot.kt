@@ -36,7 +36,7 @@ interface IBoardSlot : Serializable
 	fun GetInstabilityLost(): Int
 }
 
-abstract class BoardSlot(val MaterialType: Material, val InstabilityLost: Int, val BreakLevel: BreakLevel) : IBoardSlot, Serializable
+abstract class BoardSlot(val MaterialType: Material, val InstabilityLost: Int, val BreakLevel: BreakLevel) : IBoardSlot
 {
 	@Transient var Item: GuiItem; protected set
 
@@ -66,7 +66,7 @@ abstract class BoardSlot(val MaterialType: Material, val InstabilityLost: Int, v
 			if (board != null && board.GetGuiTitle().equals(it.view.title))
 			{
 				val tool: ItemStack = it.cursor ?: ItemStack(Material.AIR)
-				val customItem = CustomItems.GetByItemstack(tool)
+				val customItem = CustomItems.GetByItemStack(tool)
 				if (customItem is RuneTool)
 				{
 					val slot = board.Slots[key]
