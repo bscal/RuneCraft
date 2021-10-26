@@ -97,7 +97,7 @@ class PotionStats(val PotionType: PotionEffectType, var Amplifier: Int, name: St
 	{
 		itemStack.editMeta {
 			it.persistentDataContainer.set(NamespacedKey(RuneCraft.INSTANCE, PotionType.name), PotionEffectTypeTag(),
-				PotionEffect(PotionType, 3000, Amplifier))
+				PotionEffect(PotionType, 5000, Amplifier))
 		}
 		return true
 	}

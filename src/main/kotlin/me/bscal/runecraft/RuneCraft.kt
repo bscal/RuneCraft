@@ -2,13 +2,18 @@ package me.bscal.runecraft
 
 import me.bscal.runecraft.items.customitems.CustomItemListener
 import me.bscal.runecraft.items.runeitems.RuneCraftItems
+import me.bscal.runecraft.stats.PotionStats
+import me.bscal.runecraft.stats.Stat
+import net.axay.kspigot.chat.KColors
 import net.axay.kspigot.commands.command
 import net.axay.kspigot.commands.runs
 import net.axay.kspigot.event.listen
 import net.axay.kspigot.extensions.bukkit.give
 import net.axay.kspigot.extensions.pluginManager
 import net.axay.kspigot.main.KSpigot
+import org.bukkit.attribute.AttributeModifier
 import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.potion.PotionEffectType
 import java.util.*
 import java.util.logging.Level
 
@@ -51,7 +56,17 @@ class RuneCraft : KSpigot()
 
 		command("runecraft_items_test") {
 			runs {
-				player.give(RuneCraftItems.IRON_CHISEL.NewStack(), RuneCraftItems.GOLD_CHISEL.NewStack(), RuneCraftItems.DIAMOND_CHISEL.NewStack())
+				player.give(RuneCraftItems.IRON_CHISEL.NewStack(), RuneCraftItems.GOLD_CHISEL.NewStack(),
+					RuneCraftItems.DIAMOND_CHISEL.NewStack())
+			}
+		}
+
+		command("rc_potion_test") {
+			runs {
+				val stat =
+					PotionStats(PotionEffectType.FIRE_RESISTANCE, 1, "Fire_Res", 1.0, AttributeModifier.Operation.ADD_NUMBER, KColors.GREEN)
+				val rune = RuneCraftItems.CARVED_RUNE.NewStack(arrayListOf<Stat>(stat))
+				player.give(rune)
 			}
 		}
 
@@ -61,7 +76,8 @@ class RuneCraft : KSpigot()
 				{
 					player.give(RuneCraftItems.UNCARVED_RUNE.NewStack(Rune(RuneType.Overworld)))
 				}
-				catch(e: Exception) {
+				catch (e: Exception)
+				{
 					e.printStackTrace()
 				}
 			}

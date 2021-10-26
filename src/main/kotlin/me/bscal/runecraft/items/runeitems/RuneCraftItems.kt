@@ -1,6 +1,5 @@
 package me.bscal.runecraft.items.runeitems
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import me.bscal.runecraft.Rune
 import me.bscal.runecraft.RuneCraft
 import me.bscal.runecraft.items.customitems.CustomItem
@@ -11,9 +10,11 @@ import net.axay.kspigot.items.*
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.enchantments.Enchantment
+import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
+import java.util.function.Consumer
 
 object RuneCraftItems
 {
@@ -45,11 +46,16 @@ object RuneCraftItems
 				+"${KColors.LIGHTSLATEGRAY}To begin engraving right click in hand."
 			}
 		}
-	}, true, InteractCallback = {
-		val rune = Rune.Deserialize(it.item!!)
-		rune?.Open(it.player, it.item!!)
-	})
+	}, true)
 	{
+		init
+		{
+			InteractCallback = Consumer<PlayerInteractEvent> {
+				val rune = Rune.Deserialize(it.item!!)
+				rune?.Open(it.player, it.item!!)
+			}
+		}
+
 		fun NewStack(rune: Rune): ItemStack
 		{
 			val itemStack = super.NewStack()
@@ -73,7 +79,7 @@ object RuneCraftItems
 		}
 	}, true)
 	{
-		fun NewStack(stats: ObjectArrayList<Stat>): ItemStack
+		fun NewStack(stats: Collection<Stat>): ItemStack
 		{
 			val itemStack = super.NewStack()
 			for (stat in stats)

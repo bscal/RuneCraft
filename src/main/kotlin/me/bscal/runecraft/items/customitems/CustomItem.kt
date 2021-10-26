@@ -14,10 +14,10 @@ import java.util.logging.Level
 
 abstract class CustomItem(val DefaultStack: ItemStack, val Cancel: Boolean)
 {
-	val InteractCallback: Consumer<PlayerInteractEvent>? = null
-	val InitilizeCallback: CustomItemInitCallback? = null
-	val RemoveCallback: CustomItemRemoveCallback? = null
-	val AttackCallback: CustomItemAttackCallback? = null
+	var InteractCallback: Consumer<PlayerInteractEvent>? = null
+	var InitilizeCallback: CustomItemInitCallback? = null
+	var RemoveCallback: CustomItemRemoveCallback? = null
+	var AttackCallback: CustomItemAttackCallback? = null
 	//val DamagedCallback: CustomItemDamagedCallback? = null
 	//val MineCallback: Consumer<BlockBreakEvent>? = null
 
