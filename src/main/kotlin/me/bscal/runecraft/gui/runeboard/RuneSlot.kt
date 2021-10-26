@@ -1,4 +1,4 @@
-package me.bscal.runecraft.gui
+package me.bscal.runecraft.gui.runeboard
 
 import com.github.stefvanschie.inventoryframework.gui.GuiItem
 import me.bscal.runecraft.items.customitems.CustomItems

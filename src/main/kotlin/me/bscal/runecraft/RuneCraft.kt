@@ -1,5 +1,6 @@
 package me.bscal.runecraft
 
+import me.bscal.runecraft.gui.runecrafter.CrafterGUI
 import me.bscal.runecraft.items.customitems.CustomItemListener
 import me.bscal.runecraft.items.runeitems.RuneCraftItems
 import me.bscal.runecraft.stats.PotionStats
@@ -8,11 +9,13 @@ import net.axay.kspigot.chat.KColors
 import net.axay.kspigot.commands.command
 import net.axay.kspigot.commands.runs
 import net.axay.kspigot.event.listen
+import net.axay.kspigot.extensions.bukkit.getHandItem
 import net.axay.kspigot.extensions.bukkit.give
 import net.axay.kspigot.extensions.pluginManager
 import net.axay.kspigot.main.KSpigot
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.potion.PotionEffectType
 import java.util.*
 import java.util.logging.Level
@@ -67,6 +70,24 @@ class RuneCraft : KSpigot()
 					PotionStats(PotionEffectType.FIRE_RESISTANCE, 1, "Fire_Res", 1.0, AttributeModifier.Operation.ADD_NUMBER, KColors.GREEN)
 				val rune = RuneCraftItems.CARVED_RUNE.NewStack(arrayListOf<Stat>(stat))
 				player.give(rune)
+			}
+		}
+
+		command("rc_item_build") {
+			runs {
+				try
+				{
+					val handItem = player.getHandItem(EquipmentSlot.HAND)
+					if (handItem != null)
+					{
+						val crafterGUI = CrafterGUI(handItem, 3)
+						crafterGUI.Open(player)
+					}
+				}
+				catch (e: Exception)
+				{
+					e.printStackTrace()
+				}
 			}
 		}
 

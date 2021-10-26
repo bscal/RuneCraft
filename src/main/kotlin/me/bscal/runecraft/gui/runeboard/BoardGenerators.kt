@@ -1,4 +1,4 @@
-package me.bscal.runecraft.gui
+package me.bscal.runecraft.gui.runeboard
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap

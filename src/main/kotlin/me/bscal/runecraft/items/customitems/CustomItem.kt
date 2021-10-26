@@ -17,13 +17,17 @@ abstract class CustomItem(val DefaultStack: ItemStack, val Cancel: Boolean)
 	var InteractCallback: Consumer<PlayerInteractEvent>? = null
 	var InitilizeCallback: CustomItemInitCallback? = null
 	var RemoveCallback: CustomItemRemoveCallback? = null
-	var AttackCallback: CustomItemAttackCallback? = null
-	//val DamagedCallback: CustomItemDamagedCallback? = null
+	var AttackCallback: CustomItemAttackCallback? = null	//val DamagedCallback: CustomItemDamagedCallback? = null
 	//val MineCallback: Consumer<BlockBreakEvent>? = null
 
 	open fun NewStack(): ItemStack
 	{
 		return DefaultStack.clone()
+	}
+
+	open fun Is(itemStack: ItemStack): Boolean
+	{
+		return itemStack.hasItemMeta() && itemStack.type == DefaultStack.type && itemStack.itemMeta.customModelData == DefaultStack.itemMeta.customModelData
 	}
 }
 

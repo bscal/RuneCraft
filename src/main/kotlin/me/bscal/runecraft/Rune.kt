@@ -5,9 +5,9 @@ import kotlinx.serialization.Transient
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
-import me.bscal.runecraft.gui.BoardSlot
-import me.bscal.runecraft.gui.LARGE_RUNE_SIZE
-import me.bscal.runecraft.gui.RuneBoard
+import me.bscal.runecraft.gui.runeboard.BoardSlot
+import me.bscal.runecraft.gui.runeboard.LARGE_RUNE_SIZE
+import me.bscal.runecraft.gui.runeboard.RuneBoard
 import net.axay.kspigot.items.*
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
@@ -56,8 +56,7 @@ import java.util.logging.Level
 	@Transient val Board: RuneBoard = RuneBoard(this, LARGE_RUNE_SIZE)
 
 	fun Open(player: Player, runeItemStack: ItemStack)
-	{
-		//TODO
+	{		//TODO
 		Board.Generate(player)
 		IsGenerated = true
 		Board.Open(player, runeItemStack)

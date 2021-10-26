@@ -1,5 +1,6 @@
 package me.bscal.runecraft.stats
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import net.md_5.bungee.api.ChatColor
 import org.bukkit.attribute.Attribute
@@ -80,6 +81,11 @@ class VanillaStat(name: String, color: ChatColor, val Attribute: Attribute, var 
 		return result
 	}
 
+}
+
+object Stats
+{
+	val Registry = Object2ObjectOpenHashMap<String, Stat>()
 }
 
 data class RuneStats(val StatsSet: ObjectOpenHashSet<Stat> = ObjectOpenHashSet())

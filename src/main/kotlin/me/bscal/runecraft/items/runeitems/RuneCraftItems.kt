@@ -79,12 +79,26 @@ object RuneCraftItems
 		}
 	}, true)
 	{
+		fun NewStack(rune: Rune): ItemStack
+		{
+			val itemStack = super.NewStack()
+			for (stat in rune.Board.Stats.StatsSet)
+			{
+				itemStack.editMeta {
+					it.addLore {
+						+"${KColors.LIGHTSLATEGRAY}${stat.GetLoreString()}"
+					}
+				}
+			}
+			return itemStack
+		}
+
 		fun NewStack(stats: Collection<Stat>): ItemStack
 		{
 			val itemStack = super.NewStack()
 			for (stat in stats)
 			{
-				stat.ApplyToItemStack(itemStack)
+				//stat.ApplyToItemStack(itemStack)
 				itemStack.editMeta {
 					it.addLore {
 						+"${KColors.LIGHTSLATEGRAY}${stat.GetLoreString()}"
