@@ -1,13 +1,15 @@
 package me.bscal.runecraft
 
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
-import kotlinx.serialization.decodeFromByteArray
-import kotlinx.serialization.encodeToByteArray
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import kotlinx.serialization.*
+import kotlinx.serialization.builtins.ByteArraySerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.*
 import kotlinx.serialization.protobuf.ProtoBuf
 import me.bscal.runecraft.gui.runeboard.BoardSlot
 import me.bscal.runecraft.gui.runeboard.LARGE_RUNE_SIZE
 import me.bscal.runecraft.gui.runeboard.RuneBoard
+import me.bscal.runecraft.stats.StatInstance
 import net.axay.kspigot.items.*
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
@@ -35,12 +37,12 @@ import java.util.logging.Level
 				val meta = itemStack.itemMeta
 				val rune = meta.persistentDataContainer.get(RuneKey, RuneItemTagType())
 				val board = meta.persistentDataContainer.get(BoardSlotKey, RuneBoardTagType())
-				if (board != null && board.isNotEmpty()) rune?.SetSlots(
-					board.toList() as ArrayList<BoardSlot> /* = java.util.ArrayList<me.bscal.runecraft.gui.BoardSlot> */)                //val slotBuffer = meta.persistentDataContainer.get(BoardSlotKey, PersistentDataType.BYTE_ARRAY)
-				//if (slotBuffer != null) {
-				//rune?.SetSlots(ProtoBuf.decodeFromByteArray(slotBuffer))
-				//}
-				return rune
+				if (board != null)
+				{
+					if (board.isEmpty()) rune?.SetSlots(ArrayList())
+					else rune?.SetSlots(board.toList() as ArrayList<BoardSlot>) /* = java.util.ArrayList<me.bscal.runecraft.gui.BoardSlot> */
+					return rune
+				}
 			}
 			return null
 		}
@@ -53,10 +55,12 @@ import java.util.logging.Level
 	var IsGenerated: Boolean = false
 	var IsBuilt: Boolean = false
 
+	var Stats: Set<StatInstance> = ObjectOpenHashSet()
+
 	@Transient val Board: RuneBoard = RuneBoard(this, LARGE_RUNE_SIZE)
 
 	fun Open(player: Player, runeItemStack: ItemStack)
-	{		//TODO
+	{        //TODO
 		Board.Generate(player)
 		IsGenerated = true
 		Board.Open(player, runeItemStack)
@@ -64,8 +68,8 @@ import java.util.logging.Level
 
 	fun AddRuneToItem(player: Player, itemStack: ItemStack): Boolean
 	{
-		Board.Stats.StatsSet.forEach {
-			it.ApplyToItemStack(itemStack)
+		Stats.forEach {
+			it.GetStat()?.ApplyToItemStack(it, itemStack)
 		}
 		return true
 	}
@@ -92,6 +96,28 @@ import java.util.logging.Level
 	{
 		val Overworld = RuneType("Overworld")
 		val Default = Overworld
+	}
+}
+
+object ObjectHashSetSerializer : KSerializer<ObjectOpenHashSet<*>>
+{
+	private val delegateSerializer = ByteArraySerializer()
+	override val descriptor = SerialDescriptor("ObjectOpenHashSet", delegateSerializer.descriptor)
+
+	override fun serialize(encoder: Encoder, value: ObjectOpenHashSet<*>)
+	{
+		val b = ByteArrayOutputStream()
+		val o = ObjectOutputStream(b)
+		o.writeObject(value)
+		encoder.encodeSerializableValue(delegateSerializer, b.toByteArray())
+	}
+
+	override fun deserialize(decoder: Decoder): ObjectOpenHashSet<*>
+	{
+		val bytes = decoder.decodeSerializableValue(delegateSerializer)
+		val b = ByteArrayInputStream(bytes)
+		val o = ObjectInputStream(b)
+		return o.readObject() as ObjectOpenHashSet<*>
 	}
 }
 

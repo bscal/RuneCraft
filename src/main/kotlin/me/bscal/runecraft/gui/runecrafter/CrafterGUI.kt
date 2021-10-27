@@ -11,13 +11,14 @@ import me.bscal.runecraft.RuneCraft
 import me.bscal.runecraft.gui.runeboard.GuiItems
 import me.bscal.runecraft.items.runeitems.RuneCraftItems
 import net.axay.kspigot.chat.KColors
+import net.axay.kspigot.extensions.bukkit.give
 import net.axay.kspigot.items.itemStack
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
-import org.bukkit.entity.Item
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
+import java.util.logging.Level
 
 class CrafterGUI(val ItemStack: ItemStack, val Size: Int)
 {
@@ -46,6 +47,8 @@ class CrafterGUI(val ItemStack: ItemStack, val Size: Int)
 		Deserialize()
 		if (!this::m_Runes.isInitialized || m_Runes.isEmpty()) m_Runes = ArrayList(4)
 
+		RuneCraft.LogDebug(Level.INFO, "$m_Runes")
+
 		val background = StaticPane(9, 6)
 		background.fillWith(GuiItems.SeparatorIcon)
 		background.addItem(CreateHelpIcon(), 0, 0)
@@ -58,7 +61,14 @@ class CrafterGUI(val ItemStack: ItemStack, val Size: Int)
 
 		background.setOnClick {
 			it.isCancelled = true
-			if (it.currentItem == null && it.cursor != null) AddRuneToStack(player, it.cursor!!, it.slot)
+			if (it.currentItem == null && it.cursor != null)
+			{
+				val cursor: ItemStack = it.cursor!!
+				AddRuneToStack(player, cursor.clone(), it.slot)
+				if (cursor.amount < 2) it.cursor = null
+				else cursor.amount = cursor.amount - 1
+				Serialize()
+			}
 		}
 
 		m_Gui.addPane(background)
@@ -106,7 +116,7 @@ class CrafterGUI(val ItemStack: ItemStack, val Size: Int)
 		{
 			val x: Int = slot % 9
 			val y: Int = slot / 9
-			(m_Gui.panes[0] as StaticPane).addItem(GuiItem(itemStack.clone()), x, y)
+			(m_Gui.panes[0] as StaticPane).addItem(GuiItem(itemStack), x, y)
 			m_Gui.update()
 
 			val rune = Rune.Deserialize(itemStack)
@@ -115,8 +125,6 @@ class CrafterGUI(val ItemStack: ItemStack, val Size: Int)
 				m_Runes.add(rune)
 				rune.AddRuneToItem(player, ItemStack)
 			}
-			if (itemStack.amount < 2) player.inventory.setItemInMainHand(null)
-			else itemStack.amount = itemStack.amount - 1
 		}
 	}
 }

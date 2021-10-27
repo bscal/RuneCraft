@@ -4,8 +4,8 @@ import com.github.stefvanschie.inventoryframework.gui.GuiItem
 import me.bscal.runecraft.items.customitems.CustomItems
 import me.bscal.runecraft.items.runeitems.BreakLevel
 import me.bscal.runecraft.items.runeitems.RuneTool
-import me.bscal.runecraft.stats.Stat
-import me.bscal.runecraft.stats.VanillaStat
+import me.bscal.runecraft.stats.StatInstance
+import me.bscal.runecraft.stats.StatRegistry
 import net.axay.kspigot.chat.KColors
 import net.axay.kspigot.items.addLore
 import net.axay.kspigot.items.meta
@@ -170,32 +170,26 @@ class DirtSlot(isGrass: Boolean) : BoardSlot(if (isGrass) Material.GRASS_BLOCK e
 
 }
 
-abstract class GemSlot(material: Material) : BoardSlot(material, 0, BreakLevel.UNBREAKABLE)
+abstract class GemSlot(name: String, material: Material) : BoardSlot(material, 0, BreakLevel.UNBREAKABLE)
 {
-	@delegate:Transient val Stats: List<Stat> by lazy(::LazyStatInitilizer)
+	val Stats = ArrayList<StatInstance>()
 
-	protected abstract fun LazyStatInitilizer(): List<Stat>
-
-}
-
-class DiamondSlot : GemSlot(Material.DIAMOND_BLOCK)
-{
 	init
 	{
 		Item.item.meta {
-			name = "${KColors.LIGHTSKYBLUE}Diamond Gem"
-			addLore {
-				Stats.forEach {
-					+it.GetLoreString()
-				}
+			this.name = name
+			this.addLore {
+				Stats.forEach { +it.GetStat()?.GetLoreString(it)!! } // TODO better way? thinking removing stat if deserialized
 			}
 		}
 	}
+}
 
-	override fun LazyStatInitilizer(): List<Stat>
+class DiamondSlot : GemSlot("${KColors.LIGHTSKYBLUE}Diamond Gem", Material.DIAMOND_BLOCK)
+{
+	init
 	{
-		return listOf<Stat>(VanillaStat("Health", KColors.GREEN, Attribute.GENERIC_MAX_HEALTH,
-			AttributeModifier("Health", 1.0, AttributeModifier.Operation.ADD_NUMBER)))
+		Stats.add(StatRegistry.VANILLA_STAT.NewStatInstance(Attribute.GENERIC_MAX_HEALTH, 1.0, AttributeModifier.Operation.ADD_NUMBER))
 	}
 
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
@@ -209,24 +203,10 @@ class DiamondSlot : GemSlot(Material.DIAMOND_BLOCK)
 	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean = true
 }
 
-class EmeraldSlot : GemSlot(Material.EMERALD_BLOCK)
+class EmeraldSlot : GemSlot("${KColors.MEDIUMSPRINGGREEN}Emerald Gem", Material.EMERALD_BLOCK)
 {
 	init
 	{
-		Item.item.meta {
-			name = "${KColors.LIGHTSKYBLUE}Diamond Gem"
-			addLore {
-				Stats.forEach {
-					+it.GetLoreString()
-				}
-			}
-		}
-	}
-
-	override fun LazyStatInitilizer(): List<Stat>
-	{
-		return listOf<Stat>(VanillaStat("Health", KColors.GREEN, Attribute.GENERIC_MAX_HEALTH,
-			AttributeModifier("Health", 1.0, AttributeModifier.Operation.ADD_NUMBER)))
 	}
 
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
@@ -240,24 +220,10 @@ class EmeraldSlot : GemSlot(Material.EMERALD_BLOCK)
 	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean = true
 }
 
-class RedstoneSlot : GemSlot(Material.REDSTONE_BLOCK)
+class RedstoneSlot : GemSlot("${KColors.DARKRED}Ruby Gem", Material.REDSTONE_BLOCK)
 {
 	init
 	{
-		Item.item.meta {
-			name = "${KColors.LIGHTSKYBLUE}Ruby Gem"
-			addLore {
-				Stats.forEach {
-					+it.GetLoreString()
-				}
-			}
-		}
-	}
-
-	override fun LazyStatInitilizer(): List<Stat>
-	{
-		return listOf<Stat>(VanillaStat("Health", KColors.GREEN, Attribute.GENERIC_MAX_HEALTH,
-			AttributeModifier("Health", 1.0, AttributeModifier.Operation.ADD_NUMBER)))
 	}
 
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
@@ -271,24 +237,10 @@ class RedstoneSlot : GemSlot(Material.REDSTONE_BLOCK)
 	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean = true
 }
 
-class LapisSlot : GemSlot(Material.LAPIS_BLOCK)
+class LapisSlot : GemSlot("${KColors.DARKBLUE}Sapphire Gem", Material.LAPIS_BLOCK)
 {
 	init
 	{
-		Item.item.meta {
-			name = "${KColors.LIGHTSKYBLUE}Sapphire Gem"
-			addLore {
-				Stats.forEach {
-					+it.GetLoreString()
-				}
-			}
-		}
-	}
-
-	override fun LazyStatInitilizer(): List<Stat>
-	{
-		return listOf<Stat>(VanillaStat("Health", KColors.GREEN, Attribute.GENERIC_MAX_HEALTH,
-			AttributeModifier("Health", 1.0, AttributeModifier.Operation.ADD_NUMBER)))
 	}
 
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
@@ -302,26 +254,8 @@ class LapisSlot : GemSlot(Material.LAPIS_BLOCK)
 	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean = true
 }
 
-class AmethystSlot : GemSlot(Material.AMETHYST_BLOCK)
+class AmethystSlot : GemSlot("${KColors.DARKPURPLE}Amethyst Gem", Material.AMETHYST_BLOCK)
 {
-	init
-	{
-		Item.item.meta {
-			name = "${KColors.LIGHTSKYBLUE}Amethyst Gem"
-			addLore {
-				Stats.forEach {
-					+it.GetLoreString()
-				}
-			}
-		}
-	}
-
-	override fun LazyStatInitilizer(): List<Stat>
-	{
-		return listOf<Stat>(VanillaStat("Health", KColors.GREEN, Attribute.GENERIC_MAX_HEALTH,
-			AttributeModifier("Health", 1.0, AttributeModifier.Operation.ADD_NUMBER)))
-	}
-
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
 	{
 	}

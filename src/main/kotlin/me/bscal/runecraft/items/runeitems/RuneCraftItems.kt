@@ -1,10 +1,12 @@
 package me.bscal.runecraft.items.runeitems
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import me.bscal.runecraft.Rune
 import me.bscal.runecraft.RuneCraft
+import me.bscal.runecraft.RuneType
 import me.bscal.runecraft.items.customitems.CustomItem
 import me.bscal.runecraft.items.customitems.CustomItems
-import me.bscal.runecraft.stats.Stat
+import me.bscal.runecraft.stats.StatInstance
 import net.axay.kspigot.chat.KColors
 import net.axay.kspigot.items.*
 import org.bukkit.Material
@@ -82,26 +84,29 @@ object RuneCraftItems
 		fun NewStack(rune: Rune): ItemStack
 		{
 			val itemStack = super.NewStack()
-			for (stat in rune.Board.Stats.StatsSet)
+			rune.Serialize(itemStack)
+			for (stat in rune.Stats)
 			{
 				itemStack.editMeta {
 					it.addLore {
-						+"${KColors.LIGHTSLATEGRAY}${stat.GetLoreString()}"
+						+"${KColors.LIGHTSLATEGRAY}${stat.GetStat()?.GetLoreString(stat)!!}"
 					}
 				}
 			}
 			return itemStack
 		}
 
-		fun NewStack(stats: Collection<Stat>): ItemStack
+		fun NewStack(stats: ObjectOpenHashSet<StatInstance>): ItemStack
 		{
 			val itemStack = super.NewStack()
+			val rune = Rune(RuneType.Default)
+			rune.Stats = stats
+			rune.Serialize(itemStack)
 			for (stat in stats)
 			{
-				//stat.ApplyToItemStack(itemStack)
 				itemStack.editMeta {
 					it.addLore {
-						+"${KColors.LIGHTSLATEGRAY}${stat.GetLoreString()}"
+						+"${KColors.LIGHTSLATEGRAY}${stat.GetStat()?.GetLoreString(stat)!!}"
 					}
 				}
 			}

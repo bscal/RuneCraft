@@ -7,7 +7,8 @@ import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.*
 import kotlinx.serialization.protobuf.ProtoBuf
 import me.bscal.runecraft.RuneCraft
-import net.md_5.bungee.api.ChatColor
+import net.axay.kspigot.data.NBTData
+import net.axay.kspigot.data.NBTDataType
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.inventory.ItemStack
@@ -81,30 +82,67 @@ class PotionEffectTypeTag : PersistentDataType<ByteArray, PotionEffect>
 
 	override fun toPrimitive(complex: PotionEffect, context: PersistentDataAdapterContext): ByteArray
 	{
-		return ProtoBuf.encodeToByteArray(complex)
+		return ProtoBuf.encodeToByteArray(PotionEffectSerializer, complex)
 	}
 
 	override fun fromPrimitive(primitive: ByteArray, context: PersistentDataAdapterContext): PotionEffect
 	{
-		return ProtoBuf.decodeFromByteArray(primitive)
+		return ProtoBuf.decodeFromByteArray(PotionEffectSerializer, primitive)
 	}
 }
 
-class PotionStats(val PotionType: PotionEffectType, var Amplifier: Int, name: String, value: Double, operation: AttributeModifier.Operation,
-	color: ChatColor) : Stat(name, value, operation, color)
+class PotionStats(namespacedKey: NamespacedKey) : BaseStat(namespacedKey)
 {
-	override fun ApplyToItemStack(itemStack: ItemStack): Boolean
+	companion object
 	{
-		itemStack.editMeta {
-			it.persistentDataContainer.set(NamespacedKey(RuneCraft.INSTANCE, PotionType.name), PotionEffectTypeTag(),
-				PotionEffect(PotionType, 5000, Amplifier))
-		}
-		return true
+		val EFFECT_KEY = "effect"
+		val MAX_AMP_KEY = "max_amp"
 	}
 
-	override fun Combine(other: Stat)
+	override fun CombineInstance(instance: StatInstance, other: StatInstance): Boolean
 	{
-		other as PotionStats
-		Amplifier += other.Amplifier
+		if (!IsSame(instance, other)) return false
+
+		val maxAmp = instance.additionalData[MAX_AMP_KEY, NBTDataType.INT] ?: 1
+		val newAmp = (instance.Value + other.Value).coerceAtMost(maxAmp.toDouble())
+		if (newAmp > instance.Value)
+		{
+			val bytes = instance.additionalData[EFFECT_KEY, NBTDataType.BYTE_ARRAY]
+			if (bytes == null || bytes.isEmpty()) return false
+			instance.Value = newAmp
+			val effect: PotionEffect = ProtoBuf.decodeFromByteArray(PotionEffectSerializer, bytes)
+			val newEffect = PotionEffect(effect.type, effect.duration, newAmp.toInt(), effect.isAmbient, effect.hasParticles())
+			instance.additionalData[EFFECT_KEY, NBTDataType.BYTE_ARRAY] = ProtoBuf.encodeToByteArray(PotionEffectSerializer, newEffect)
+			return true
+		}
+		return false
+	}
+
+	fun NewStatInstance(effect: PotionEffect, maxAmp: Int = 3): StatInstance
+	{
+		val nbt = NBTData()
+		nbt[MAX_AMP_KEY, NBTDataType.INT] = maxAmp
+		nbt[EFFECT_KEY, NBTDataType.BYTE_ARRAY] = ProtoBuf.encodeToByteArray(PotionEffectSerializer, effect)
+		return super.NewStatInstance(effect.amplifier.toDouble(), AttributeModifier.Operation.ADD_NUMBER, nbt)
+	}
+
+	override fun ApplyToItemStack(instance: StatInstance, itemStack: ItemStack)
+	{
+		val bytes = instance.additionalData[EFFECT_KEY, NBTDataType.BYTE_ARRAY]
+		if (bytes == null || bytes.isEmpty()) return
+		val effect: PotionEffect = ProtoBuf.decodeFromByteArray(PotionEffectSerializer, bytes)
+		itemStack.editMeta {
+			it.persistentDataContainer.set(NamespacedKey(RuneCraft.INSTANCE, effect.type.name), PotionEffectTypeTag(), effect)
+		}
+	}
+
+	override fun GetLocalName(instance: StatInstance): String
+	{
+		val bytes = instance.additionalData[EFFECT_KEY, NBTDataType.BYTE_ARRAY]
+		if (bytes == null || bytes.isEmpty()) return ""
+		val effect: PotionEffect = ProtoBuf.decodeFromByteArray(PotionEffectSerializer, bytes)
+		val formattedName = effect.type.name.replace("_", " ")
+
+		return "${formattedName[0]}${formattedName.substring(1).lowercase()}"
 	}
 }

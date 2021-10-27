@@ -136,6 +136,7 @@ class CustomItemListener : Listener
 		val player = event.player
 		val oldItemStack = player.inventory.getItem(event.previousSlot)
 		val newItemStack = player.inventory.getItem(event.newSlot)
+		if (newItemStack == null || !newItemStack.hasItemMeta()) return
 		HandleCustomItems(player, oldItemStack, newItemStack, CustomItemInitContext.ITEM_SWAP)
 	}
 

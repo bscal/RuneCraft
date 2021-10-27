@@ -6,10 +6,10 @@ import com.github.stefvanschie.inventoryframework.pane.StaticPane
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import me.bscal.runecraft.*
 import me.bscal.runecraft.items.runeitems.BreakLevel
 import me.bscal.runecraft.items.runeitems.RuneTool
-import me.bscal.runecraft.stats.RuneStats
 import me.bscal.runecraft.stats.addStat
 import net.axay.kspigot.chat.KColors
 import net.axay.kspigot.items.*
@@ -53,9 +53,6 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	private lateinit var Player: Player
 	private lateinit var RuneItemStack: ItemStack
 
-	val Stats by lazy {
-		RuneStats()
-	}
 	private val LineSlots: IntArrayList = IntArrayList()
 	private val LineGems: IntArrayList = IntArrayList()
 
@@ -129,15 +126,15 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		LineGems.forEach {
 			val slot = Slots[it] as GemSlot
 			slot.Stats.forEach { stat ->
-				Stats.StatsSet.addStat(stat)
+				(Rune.Stats as ObjectOpenHashSet).addStat(stat)
 			}
 		}
 
 		StatsIcon.item.amount = Rune.Power.toInt()
 		StatsIcon.item.editMeta {
 			it.setLore {
-				Stats.StatsSet.forEach { stat ->
-					+stat.GetLoreString()
+				Rune.Stats.forEach { stat ->
+					+stat.GetStat()?.GetLoreString(stat)!! // TODO
 				}
 			}
 		}
