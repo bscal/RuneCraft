@@ -32,8 +32,8 @@ object StatRegistry
 {
 	val Registry = Object2ObjectOpenHashMap<NamespacedKey, BaseStat>()
 
-	val VANILLA_STAT : VanillaStat = Register(VanillaStat(NamespacedKey(RuneCraft.INSTANCE, "vanilla_stat"))) as VanillaStat
-	val POTION_STAT : PotionStats = Register(PotionStats(NamespacedKey(RuneCraft.INSTANCE, "potion_stat"))) as PotionStats
+	val VANILLA_STAT: VanillaStat = Register(VanillaStat(NamespacedKey(RuneCraft.INSTANCE, "vanilla_stat"))) as VanillaStat
+	val POTION_STAT: PotionStats = Register(PotionStats(NamespacedKey(RuneCraft.INSTANCE, "potion_stat"))) as PotionStats
 
 	fun Register(stat: BaseStat): BaseStat
 	{
@@ -104,7 +104,7 @@ abstract class BaseStat(val Id: NamespacedKey)
 
 	abstract fun ApplyToItemStack(instance: StatInstance, itemStack: ItemStack)
 
-	abstract fun GetLocalName(instance: StatInstance) : String
+	abstract fun GetLocalName(instance: StatInstance): String
 
 	open fun IsSame(instance: StatInstance, other: StatInstance): Boolean
 	{

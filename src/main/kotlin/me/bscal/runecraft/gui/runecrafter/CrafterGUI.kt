@@ -11,7 +11,6 @@ import me.bscal.runecraft.RuneCraft
 import me.bscal.runecraft.gui.runeboard.GuiItems
 import me.bscal.runecraft.items.runeitems.RuneCraftItems
 import net.axay.kspigot.chat.KColors
-import net.axay.kspigot.extensions.bukkit.give
 import net.axay.kspigot.items.itemStack
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -26,7 +25,7 @@ class CrafterGUI(val ItemStack: ItemStack, val Size: Int)
 	{
 		private val RUNE_KEY = NamespacedKey(RuneCraft.INSTANCE, "_RUNES")
 
-		fun SlotToIndex(slot: Int) : Int
+		fun SlotToIndex(slot: Int): Int
 		{
 			return when (slot)
 			{

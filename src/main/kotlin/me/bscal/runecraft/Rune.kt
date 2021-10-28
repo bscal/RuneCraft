@@ -2,7 +2,7 @@ package me.bscal.runecraft
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.serialization.*
-import kotlinx.serialization.builtins.ByteArraySerializer
+import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.*
 import kotlinx.serialization.protobuf.ProtoBuf
@@ -55,7 +55,8 @@ import java.util.logging.Level
 	var IsGenerated: Boolean = false
 	var IsBuilt: Boolean = false
 
-	var Stats: Set<StatInstance> = ObjectOpenHashSet()
+	@Serializable(ObjectHashSetSerializer::class)
+	var Stats: ObjectOpenHashSet<StatInstance> = ObjectOpenHashSet()
 
 	@Transient val Board: RuneBoard = RuneBoard(this, LARGE_RUNE_SIZE)
 
@@ -99,25 +100,19 @@ import java.util.logging.Level
 	}
 }
 
-object ObjectHashSetSerializer : KSerializer<ObjectOpenHashSet<*>>
+object ObjectHashSetSerializer : KSerializer<ObjectOpenHashSet<StatInstance>>
 {
-	private val delegateSerializer = ByteArraySerializer()
+	private val delegateSerializer = SetSerializer(StatInstance.serializer())
 	override val descriptor = SerialDescriptor("ObjectOpenHashSet", delegateSerializer.descriptor)
 
-	override fun serialize(encoder: Encoder, value: ObjectOpenHashSet<*>)
+	override fun serialize(encoder: Encoder, value: ObjectOpenHashSet<StatInstance>)
 	{
-		val b = ByteArrayOutputStream()
-		val o = ObjectOutputStream(b)
-		o.writeObject(value)
-		encoder.encodeSerializableValue(delegateSerializer, b.toByteArray())
+		encoder.encodeSerializableValue(delegateSerializer, value)
 	}
 
-	override fun deserialize(decoder: Decoder): ObjectOpenHashSet<*>
+	override fun deserialize(decoder: Decoder): ObjectOpenHashSet<StatInstance>
 	{
-		val bytes = decoder.decodeSerializableValue(delegateSerializer)
-		val b = ByteArrayInputStream(bytes)
-		val o = ObjectInputStream(b)
-		return o.readObject() as ObjectOpenHashSet<*>
+		return ObjectOpenHashSet(decoder.decodeSerializableValue(delegateSerializer))
 	}
 }
 
