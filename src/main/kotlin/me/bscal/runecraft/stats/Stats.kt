@@ -33,7 +33,7 @@ object StatRegistry
 	val Registry = Object2ObjectOpenHashMap<NamespacedKey, BaseStat>()
 
 	val VANILLA_STAT: VanillaStat = Register(VanillaStat(NamespacedKey(RuneCraft.INSTANCE, "vanilla_stat"))) as VanillaStat
-	val POTION_STAT: PotionStats = Register(PotionStats(NamespacedKey(RuneCraft.INSTANCE, "potion_stat"))) as PotionStats
+	val POTION_STAT: PotionStat = Register(PotionStat(NamespacedKey(RuneCraft.INSTANCE, "potion_stat"))) as PotionStat
 
 	fun Register(stat: BaseStat): BaseStat
 	{

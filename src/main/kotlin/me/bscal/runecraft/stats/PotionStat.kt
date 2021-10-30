@@ -91,12 +91,12 @@ class PotionEffectTypeTag : PersistentDataType<ByteArray, PotionEffect>
 	}
 }
 
-class PotionStats(namespacedKey: NamespacedKey) : BaseStat(namespacedKey)
+class PotionStat(namespacedKey: NamespacedKey) : BaseStat(namespacedKey)
 {
 	companion object
 	{
-		val EFFECT_KEY = "effect"
-		val MAX_AMP_KEY = "max_amp"
+		const val EFFECT_KEY = "effect"
+		const val MAX_AMP_KEY = "max_amp"
 	}
 
 	override fun CombineInstance(instance: StatInstance, other: StatInstance): Boolean

@@ -67,7 +67,7 @@ class RuneCraft : KSpigot()
 		command("rc_potion_test") {
 			runs {
 				try {
-					val stat = StatRegistry.POTION_STAT.NewStatInstance(PotionEffect(PotionEffectType.FIRE_RESISTANCE, 5, 1))
+					val stat = StatRegistry.POTION_STAT.NewStatInstance(PotionEffect(PotionEffectType.FIRE_RESISTANCE, 5000, 1))
 					val rune = RuneCraftItems.CARVED_RUNE.NewStack(ObjectOpenHashSet(setOf(stat)))
 					player.give(rune)
 				}

@@ -2,6 +2,7 @@ package me.bscal.runecraft.items.customitems
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import me.bscal.runecraft.RuneCraft
 import me.bscal.runecraft.stats.PotionEffectTypeTag
 import net.axay.kspigot.runnables.KSpigotRunnable
 import net.axay.kspigot.runnables.task
@@ -17,6 +18,7 @@ import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffectType
 import java.util.*
+import java.util.logging.Level
 
 class PlayerItemSlot(val Slot: EquipmentSlot?)
 {
@@ -59,7 +61,7 @@ class CustomItemListener : Listener
 				it.cancel()
 				return@task
 			}
-
+			RuneCraft.Log(Level.INFO, "Updating")
 			if (!player.isDead)
 			{
 				for (slot in EquipmentSlot.values())
@@ -86,14 +88,18 @@ class CustomItemListener : Listener
 		if (event.isCancelled) return
 
 		val item = event.item
-		if (item?.hasItemMeta() == true)
+		if (item != null && item.hasItemMeta())
 		{
-			val id = CustomId(item.type, item.itemMeta.customModelData)
-			val customItem = CustomItems.GetById(id)
-			if (customItem != null)
+			val meta = item.itemMeta
+			if (meta.hasCustomModelData())
 			{
-				if (customItem.Cancel) event.isCancelled = true
-				customItem.InteractCallback?.accept(event)
+				val id = CustomId(item.type, meta.customModelData)
+				val customItem = CustomItems.GetById(id)
+				if (customItem != null)
+				{
+					if (customItem.Cancel) event.isCancelled = true
+					customItem.InteractCallback?.accept(event)
+				}
 			}
 		}
 	}
@@ -114,62 +120,61 @@ class CustomItemListener : Listener
 		}        // Todo player receiving damage
 	}
 
-	@EventHandler(priority = EventPriority.HIGH)
-	fun OnPlayerEquipItem(event: InventoryClickEvent)
-	{
-		if (event.isCancelled) return
+//	@EventHandler(priority = EventPriority.HIGH)
+//	fun OnPlayerEquipItem(event: InventoryClickEvent)
+//	{
+//		if (event.isCancelled) return
+//
+//		if (event.slotType == InventoryType.SlotType.ARMOR)
+//		{
+//			val player = event.view.player as Player
+//			val oldItemStack = event.inventory.getItem(event.slot)
+//			val newItemStack = event.currentItem
+//			HandleCustomItems(player, oldItemStack, newItemStack, CustomItemInitContext.INVENTORY_CLICK)
+//		}
+//	}
 
-		if (event.slotType == InventoryType.SlotType.ARMOR)
-		{
-			val player = event.view.player as Player
-			val oldItemStack = event.inventory.getItem(event.slot)
-			val newItemStack = event.currentItem
-			HandleCustomItems(player, oldItemStack, newItemStack, CustomItemInitContext.INVENTORY_CLICK)
-		}
-	}
+//	@EventHandler(priority = EventPriority.HIGH)
+//	fun OnPlayerItemHeld(event: PlayerItemHeldEvent)
+//	{
+//		if (event.isCancelled) return
+//
+//		val player = event.player
+//		val oldItemStack = player.inventory.getItem(event.previousSlot)
+//		val newItemStack = player.inventory.getItem(event.newSlot)
+//		if (newItemStack == null || !newItemStack.hasItemMeta()) return
+//		HandleCustomItems(player, oldItemStack, newItemStack, CustomItemInitContext.ITEM_SWAP)
+//	}
 
-	@EventHandler(priority = EventPriority.HIGH)
-	fun OnPlayerItemHeld(event: PlayerItemHeldEvent)
-	{
-		if (event.isCancelled) return
-
-		val player = event.player
-		val oldItemStack = player.inventory.getItem(event.previousSlot)
-		val newItemStack = player.inventory.getItem(event.newSlot)
-		if (newItemStack == null || !newItemStack.hasItemMeta()) return
-		HandleCustomItems(player, oldItemStack, newItemStack, CustomItemInitContext.ITEM_SWAP)
-	}
-
-	@EventHandler(priority = EventPriority.HIGH)
-	fun OnPlayerSwapHands(event: PlayerSwapHandItemsEvent)
-	{
-		if (event.isCancelled) return
-
-		val offhand = event.offHandItem
-		if (offhand != null && !offhand.type.isAir && offhand.hasItemMeta())
-		{
-			val offhandCustomItem = CustomItems.GetByItemStack(offhand)
-			offhandCustomItem?.InitilizeCallback?.Invoke(event.player, offhand, CustomItemInitContext.OFFHAND_SWAP)
-		}
-	}
+//	@EventHandler(priority = EventPriority.HIGH)
+//	fun OnPlayerSwapHands(event: PlayerSwapHandItemsEvent)
+//	{
+//		if (event.isCancelled) return
+//
+//		val offhand = event.offHandItem
+//		if (offhand != null && !offhand.type.isAir && offhand.hasItemMeta())
+//		{
+//			val offhandCustomItem = CustomItems.GetByItemStack(offhand)
+//			offhandCustomItem?.InitilizeCallback?.Invoke(event.player, offhand, CustomItemInitContext.OFFHAND_SWAP)
+//		}
+//	}
 
 	private fun UpdatePotionStats(player: Player, itemStack: ItemStack)
 	{
-		itemStack.editMeta {
-			for (key in it.persistentDataContainer.keys)
+		if (itemStack.hasItemMeta())
+		{
+			val meta = itemStack.itemMeta
+			for (key in meta.persistentDataContainer.keys)
 			{
 				val type = PotionEffectType.getByName(key.key)
 				if (type != null)
 				{
-					val effect = it.persistentDataContainer.get(key, PotionEffectTypeTag())
+					val effect = meta.persistentDataContainer.get(key, PotionEffectTypeTag())
 					if (effect != null)
 					{
 						val currentEffect = player.getPotionEffect(effect.type)
-						if (currentEffect != null && effect.amplifier >= currentEffect.amplifier)
-						{
-							player.removePotionEffect(effect.type)
-							player.addPotionEffect(effect)
-						}
+						if (currentEffect != null && effect.amplifier >= currentEffect.amplifier) player.removePotionEffect(effect.type)
+						player.addPotionEffect(effect)
 					}
 				}
 			}
