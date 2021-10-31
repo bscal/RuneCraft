@@ -1,6 +1,9 @@
 package me.bscal.runecraft.stats
 
-import kotlinx.serialization.*
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.Serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
@@ -99,23 +102,23 @@ class PotionStat(namespacedKey: NamespacedKey) : BaseStat(namespacedKey)
 		const val MAX_AMP_KEY = "max_amp"
 	}
 
-	override fun CombineInstance(instance: StatInstance, other: StatInstance): Boolean
+	override fun CombineInstance(instance: StatInstance, other: StatInstance): StatInstance
 	{
-		if (!IsSame(instance, other)) return false
+		if (!IsSame(instance, other)) return instance
 
 		val maxAmp = instance.additionalData[MAX_AMP_KEY, NBTDataType.INT] ?: 1
 		val newAmp = (instance.Value + other.Value).coerceAtMost(maxAmp.toDouble())
 		if (newAmp > instance.Value)
 		{
 			val bytes = instance.additionalData[EFFECT_KEY, NBTDataType.BYTE_ARRAY]
-			if (bytes == null || bytes.isEmpty()) return false
+			if (bytes == null || bytes.isEmpty()) return instance
 			instance.Value = newAmp
 			val effect: PotionEffect = ProtoBuf.decodeFromByteArray(PotionEffectSerializer, bytes)
 			val newEffect = PotionEffect(effect.type, effect.duration, newAmp.toInt(), effect.isAmbient, effect.hasParticles())
 			instance.additionalData[EFFECT_KEY, NBTDataType.BYTE_ARRAY] = ProtoBuf.encodeToByteArray(PotionEffectSerializer, newEffect)
-			return true
+			return instance
 		}
-		return false
+		return instance
 	}
 
 	fun NewStatInstance(effect: PotionEffect, maxAmp: Int = 3): StatInstance

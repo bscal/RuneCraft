@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import me.bscal.runecraft.*
+import me.bscal.runecraft.gui.GuiItems
 import me.bscal.runecraft.items.runeitems.BreakLevel
 import me.bscal.runecraft.items.runeitems.RuneTool
 import me.bscal.runecraft.stats.addStat
@@ -295,60 +296,4 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		return buildSlot
 	}
 
-}
-
-object GuiItems
-{
-	private const val BLANK = ""
-
-	val SeparatorIcon = itemStack(Material.BLACK_STAINED_GLASS_PANE) {
-		meta {
-			name = BLANK
-		}
-	}
-
-	val HelpItem = GuiItem(itemStack(Material.BOOK) {
-		meta {
-			name = "${KColors.GREENYELLOW}Help"
-			addLore {
-
-			}
-		}
-	}) {
-		it.isCancelled = true
-	}
-
-	val StatsItem = GuiItem(itemStack(Material.LECTERN) {
-		meta {
-			name = "${KColors.ALICEBLUE}Stats"
-		}
-	}) {
-		it.isCancelled = true
-	}
-
-	val StabilityItem = GuiItem(itemStack(Material.TNT) {
-		meta {
-			name = "${KColors.DARKRED}Instability"
-			addLore {
-				+"${KColors.RED}Instability is number that shows how"
-				+"${KColors.RED}close the rune is to being destroyed."
-				+"${KColors.RED}Most moves will increase instability."
-				+"${KColors.RED}Instability above 9 will have increased"
-				+"${KColors.RED}odds of being destroyed."
-				+" "
-				+"${KColors.RED}0-9 = 0%"
-				+"${KColors.RED}10  = 10%"
-				+"${KColors.RED}11  = 25%"
-				+"${KColors.RED}12  = 60%"
-			}
-		}
-	}) {
-		it.isCancelled = true
-	}
-
-	val BuildItem = GuiItem(itemStack(Material.ANVIL) {
-		meta {
-			name = "${KColors.DARKGREEN}Build"
-		}
-	})
 }

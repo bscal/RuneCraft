@@ -2,19 +2,17 @@ package me.bscal.runecraft.utils
 
 import kotlinx.serialization.*
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.protobuf.ProtoBuf
-import me.bscal.runecraft.stats.StatInstance
 import net.axay.kspigot.data.NBTData
 import org.bukkit.persistence.PersistentDataAdapterContext
 import org.bukkit.persistence.PersistentDataType
 
-class NBTDataArrayTagType : PersistentDataType<ByteArray, List<NBTData>>
+class NBTDataListTagType : PersistentDataType<ByteArray, List<NBTData>>
 {
 	override fun getPrimitiveType(): Class<ByteArray> = ByteArray::class.java
 
@@ -22,16 +20,16 @@ class NBTDataArrayTagType : PersistentDataType<ByteArray, List<NBTData>>
 
 	override fun toPrimitive(complex: List<NBTData>, context: PersistentDataAdapterContext): ByteArray
 	{
-		return ProtoBuf.encodeToByteArray(NbtDataListSerializer, complex)
+		return ProtoBuf.encodeToByteArray(NBTDataListSerializer, complex)
 	}
 
 	override fun fromPrimitive(primitive: ByteArray, context: PersistentDataAdapterContext): List<NBTData>
 	{
-		return ProtoBuf.decodeFromByteArray(NbtDataListSerializer, primitive)
+		return ProtoBuf.decodeFromByteArray(NBTDataListSerializer, primitive)
 	}
 }
 
-object NbtDataListSerializer : KSerializer<List<NBTData>>
+object NBTDataListSerializer : KSerializer<List<NBTData>>
 {
 	private val delegateSerializer = ListSerializer(NBTDataSerializer)
 	override val descriptor = SerialDescriptor("ObjectOpenHashSet", delegateSerializer.descriptor)

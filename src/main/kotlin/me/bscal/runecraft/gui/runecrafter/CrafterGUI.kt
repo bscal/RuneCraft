@@ -8,7 +8,7 @@ import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 import me.bscal.runecraft.Rune
 import me.bscal.runecraft.RuneCraft
-import me.bscal.runecraft.gui.runeboard.GuiItems
+import me.bscal.runecraft.gui.GuiItems
 import me.bscal.runecraft.items.runeitems.RuneCraftItems
 import net.axay.kspigot.chat.KColors
 import net.axay.kspigot.items.itemStack
