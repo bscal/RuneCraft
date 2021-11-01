@@ -1,15 +1,10 @@
 package me.bscal.runecraft.stats
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.descriptors.element
-import kotlinx.serialization.encoding.*
 import me.bscal.runecraft.RuneCraft
+import me.bscal.runecraft.stats.spells.actions.DamageAction
+import me.bscal.runecraft.stats.spells.conditions.ChanceCondition
+import me.bscal.runecraft.stats.spells.targets.AreaTarget
 import net.axay.kspigot.chat.KColors
 import net.axay.kspigot.data.NBTData
 import net.axay.kspigot.data.NBTDataType
@@ -27,6 +22,10 @@ object StatRegistry
 
 	val VANILLA_STAT: VanillaStat = Register(VanillaStat(NamespacedKey(RuneCraft.INSTANCE, "vanilla_stat"))) as VanillaStat
 	val POTION_STAT: PotionStat = Register(PotionStat(NamespacedKey(RuneCraft.INSTANCE, "potion_stat"))) as PotionStat
+
+	val EARTH_SHOCK_STAT: SpellStat = Register(
+		SpellStat(NamespacedKey(RuneCraft.INSTANCE, "earthshock_stat"), "Earth Shock", 3, SpellType.DAMAGE_DONE, ChanceCondition(),
+			AreaTarget(), DamageAction())) as SpellStat
 
 	fun Register(stat: BaseStat): BaseStat
 	{

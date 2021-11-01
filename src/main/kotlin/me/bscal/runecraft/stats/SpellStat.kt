@@ -1,5 +1,6 @@
 package me.bscal.runecraft.stats
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import me.bscal.runecraft.utils.RomanNumber
 import me.bscal.runecraft.utils.setSpell
 import net.axay.kspigot.data.NBTData
@@ -10,6 +11,17 @@ import org.bukkit.entity.Entity
 import org.bukkit.inventory.ItemStack
 import kotlin.math.floor
 
+object SpellRegistry
+{
+	val Registry = Object2ObjectOpenHashMap<NamespacedKey, SpellStat>()
+
+	fun Register(spell: SpellStat): SpellStat
+	{
+		Registry[spell.Id] = spell
+		return spell
+	}
+}
+
 enum class SpellType
 {
 	PASSIVE, CASTED, LEFT_CLICKED, RIGHT_CLICKED, DAMAGE_DONE, DAMAGE_RECEIVED
@@ -17,26 +29,31 @@ enum class SpellType
 
 interface SpellCastAction
 {
-	fun OnCast(caster: Entity, target: Entity?, instance: StatInstance)
+	fun OnCast(caster: Entity, instance: StatInstance, targets: List<Entity>?)
+}
+
+interface SpellTarget
+{
+	fun GetTargets(caster: Entity, instance: StatInstance): List<Entity>?
 }
 
 interface SpellCondition
 {
-	fun CanCast(caster: Entity, target: Entity?, instance: StatInstance): Boolean
+	fun CanCast(caster: Entity, instance: StatInstance): Boolean
 }
 
-class SpellStat(namespacedKey: NamespacedKey, val Name: String, val MaxLevel: Int, val Type: SpellType, val Condition: SpellCondition?,
-	val CastAction: SpellCastAction) : BaseStat(namespacedKey)
+open class SpellStat(namespacedKey: NamespacedKey, val Name: String, val MaxLevel: Int, val Type: SpellType, val Condition: SpellCondition?,
+	val Target: SpellTarget, val CastAction: SpellCastAction) : BaseStat(namespacedKey)
 {
 	companion object
 	{
 		const val LEVEL_KEY = "spell_level"
 	}
 
-	fun Process(caster: Entity, target: Entity?, instance: StatInstance)
+	fun Process(caster: Entity, instance: StatInstance)
 	{
-		val canCast: Boolean = Condition?.CanCast(caster, target, instance) ?: true
-		if (canCast) CastAction.OnCast(caster, target, instance)
+		val canCast: Boolean = Condition?.CanCast(caster, instance) ?: true
+		if (canCast) CastAction.OnCast(caster, instance, Target.GetTargets(caster, instance))
 	}
 
 	override fun ApplyToItemStack(instance: StatInstance, itemStack: ItemStack)
