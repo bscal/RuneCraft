@@ -2,6 +2,7 @@ package me.bscal.runecraft.items.customitems
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import me.bscal.runecraft.RuneCraft
+import me.bscal.runecraft.items.customitems.CustomId.Companion.FromItemStack
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityDamageByEntityEvent
@@ -11,6 +12,12 @@ import java.util.function.Consumer
 import java.util.logging.Level
 
 @JvmRecord data class CustomId(val Type: Material, val ModelId: Int)
+{
+	companion object
+	{
+		inline fun FromItemStack(itemStack: ItemStack) : CustomId = CustomId(itemStack.type, itemStack.itemMeta.customModelData)
+	}
+}
 
 abstract class CustomItem(val DefaultStack: ItemStack, val Cancel: Boolean)
 {
@@ -39,7 +46,7 @@ object CustomItems
 	fun Register(internalName: String, item: CustomItem)
 	{
 		Items[internalName] = item
-		ItemsById[CustomId(item.DefaultStack.type, item.DefaultStack.itemMeta.customModelData)] = item
+		ItemsById[FromItemStack(item.DefaultStack)] = item
 		RuneCraft.LogDebug(Level.INFO, "Registering item: $internalName, $item")
 	}
 

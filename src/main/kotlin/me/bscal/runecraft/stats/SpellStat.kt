@@ -84,8 +84,8 @@ open class SpellStat(namespacedKey: NamespacedKey, val Name: String, val MaxLeve
 
 	fun SetLevel(instance: StatInstance, level: Int)
 	{
-		instance.additionalData[LEVEL_KEY, NBTDataType.INT] = level.coerceAtMost(MaxLevel)
+		instance.AdditionalData[LEVEL_KEY, NBTDataType.INT] = level.coerceAtMost(MaxLevel)
 	}
 
-	fun GetLevel(instance: StatInstance): Int = instance.additionalData[LEVEL_KEY, NBTDataType.INT] ?: 0
+	fun GetLevel(instance: StatInstance): Int = instance.AdditionalData[LEVEL_KEY, NBTDataType.INT] ?: 0
 }

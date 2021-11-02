@@ -12,9 +12,9 @@ class RaycastTarget : SpellTarget
 	{
 		if (caster is LivingEntity)
 		{
-			val distance = instance.additionalData["maxDistance", NBTDataType.INT] ?: 0
+			val distance = instance.AdditionalData["maxDistance", NBTDataType.INT] ?: 0
 			if (distance == 0) return null
-			val ignoreBlocks: Byte = instance.additionalData["ignoreBlock", NBTDataType.BYTE] ?: 0
+			val ignoreBlocks: Byte = instance.AdditionalData["ignoreBlock", NBTDataType.BYTE] ?: 0
 			caster.getTargetEntity(distance, ignoreBlocks > 0)
 		}
 		return null

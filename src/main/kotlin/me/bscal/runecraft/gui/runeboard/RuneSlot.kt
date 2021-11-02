@@ -8,6 +8,7 @@ import me.bscal.runecraft.stats.StatInstance
 import me.bscal.runecraft.stats.StatRegistry
 import net.axay.kspigot.chat.KColors
 import net.axay.kspigot.items.addLore
+import net.axay.kspigot.items.itemStack
 import net.axay.kspigot.items.meta
 import net.axay.kspigot.items.name
 import net.kyori.adventure.text.Component
@@ -19,8 +20,9 @@ import org.bukkit.event.Event
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
-import java.io.IOException
-import java.io.ObjectInputStream
+import java.io.Externalizable
+import java.io.ObjectInput
+import java.io.ObjectOutput
 import java.io.Serializable
 
 interface IBoardSlot : Serializable
@@ -36,22 +38,49 @@ interface IBoardSlot : Serializable
 	fun GetInstabilityLost(): Int
 }
 
-abstract class BoardSlot(val MaterialType: Material, val InstabilityLost: Int, val BreakLevel: BreakLevel) : IBoardSlot
+open class GuiItemWrapper : Externalizable
 {
-	@Transient var Item: GuiItem; protected set
+	@Transient lateinit var Item: GuiItem; protected set
+
+	constructor(itemStack: ItemStack)
+	{
+		Item = GuiItem(itemStack)
+	}
+
+	override fun writeExternal(out: ObjectOutput?)
+	{
+		out?.write(Item.item.serializeAsBytes())
+	}
+
+	override fun readExternal(input: ObjectInput?)
+	{
+		try
+		{
+			var bytes = ByteArray(input?.available() ?: 255)
+			input?.read(bytes)
+			val itemStack = ItemStack.deserializeBytes(bytes)
+			Item = GuiItem(itemStack)
+		}
+		catch (e: Exception)
+		{
+			e.printStackTrace()
+		}
+	}
+
+}
+
+abstract class BoardSlot(itemStack: ItemStack, val InstabilityLost: Int, val BreakLevel: BreakLevel) : IBoardSlot
+{
+	companion object
+	{
+		@JvmStatic val serialVersionID = 1L
+	}
+
+	val GuiItem: GuiItemWrapper = GuiItemWrapper(itemStack);
 
 	init
 	{
-		Item = GuiItem(ItemStack(MaterialType))
-		Item.setAction(::OnClick)
-	}
-
-	@Throws(IOException::class, ClassNotFoundException::class)
-	private fun readObject(objIn: ObjectInputStream)
-	{
-		objIn.defaultReadObject()
-		Item = GuiItem(ItemStack(MaterialType))
-		Item.setAction(::OnClick)
+		GuiItem.Item.setAction(::OnClick)
 	}
 
 	private fun OnClick(it: InventoryClickEvent)
@@ -63,7 +92,7 @@ abstract class BoardSlot(val MaterialType: Material, val InstabilityLost: Int, v
 			val y = it.slot / 9
 			val key = RuneBoard.PackCoord(x, y)
 			val board = RuneBoardCache[it.whoClicked.uniqueId]
-			if (board != null && board.GetGuiTitle().equals(it.view.title))
+			if (board != null && board.GetGuiTitle() == it.view.title)
 			{
 				val tool: ItemStack = it.cursor ?: ItemStack(Material.AIR)
 				val customItem = CustomItems.GetByItemStack(tool)
@@ -80,16 +109,30 @@ abstract class BoardSlot(val MaterialType: Material, val InstabilityLost: Int, v
 		}
 	}
 
-	override fun GetGuiItem(): GuiItem = Item
+	override fun GetGuiItem(): GuiItem = GuiItem.Item
 
 	override fun GetInstabilityLost(): Int = InstabilityLost
 }
 
-class LineSlot(materialType: Material) : BoardSlot(materialType, 0, BreakLevel.UNBREAKABLE)
+class EmptySlot() : BoardSlot(ItemStack(Material.AIR), 0, BreakLevel.UNBREAKABLE)
+{
+	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
+	{
+	}
+
+	override fun OnBreak(x: Int, y: Int, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent)
+	{
+	}
+
+	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean =
+		false
+}
+
+class LineSlot(itemStack: ItemStack) : BoardSlot(itemStack, 0, BreakLevel.UNBREAKABLE)
 {
 	init
 	{
-		Item.item.editMeta {
+		GuiItem.Item.item.editMeta {
 			it.name = "${KColors.LIGHTGRAY}Rune Line"
 		}
 	}
@@ -107,14 +150,14 @@ class LineSlot(materialType: Material) : BoardSlot(materialType, 0, BreakLevel.U
 
 }
 
-class DefaultSlot(materialType: Material, stabilityLost: Int, breakLevel: BreakLevel) : BoardSlot(materialType, stabilityLost, breakLevel)
+class DefaultSlot(itemStack: ItemStack, stabilityLost: Int, breakLevel: BreakLevel) : BoardSlot(itemStack, stabilityLost, breakLevel)
 {
 	init
 	{
 		val lore = ArrayList<Component>()
 		lore.add(Component.text("${KColors.RED}-1 Stability"))
 		lore.add(Component.text("${KColors.RED}-1 Durability"))
-		Item.item.lore(lore)
+		GuiItem.Item.item.lore(lore)
 	}
 
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
@@ -128,13 +171,13 @@ class DefaultSlot(materialType: Material, stabilityLost: Int, breakLevel: BreakL
 	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean = true
 }
 
-class BedrockSlot : BoardSlot(Material.BEDROCK, 0, BreakLevel.UNBREAKABLE)
+class BedrockSlot : BoardSlot(ItemStack(Material.BEDROCK), 0, BreakLevel.UNBREAKABLE)
 {
 	init
 	{
 		val lore = ArrayList<Component>()
 		lore.add(Component.text("${KColors.RED}Unbreakable"))
-		Item.item.lore(lore)
+		GuiItem.Item.item.lore(lore)
 	}
 
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
@@ -149,13 +192,13 @@ class BedrockSlot : BoardSlot(Material.BEDROCK, 0, BreakLevel.UNBREAKABLE)
 		false
 }
 
-class DirtSlot(isGrass: Boolean) : BoardSlot(if (isGrass) Material.GRASS_BLOCK else Material.DIRT, 0, BreakLevel.ANY)
+class DirtSlot(isGrass: Boolean) : BoardSlot(ItemStack(if (isGrass) Material.GRASS_BLOCK else Material.DIRT), 0, BreakLevel.ANY)
 {
 	init
 	{
 		val lore = ArrayList<Component>()
 		lore.add(Component.text("${KColors.RED}-1 Stability"))
-		Item.item.lore(lore)
+		GuiItem.Item.item.lore(lore)
 	}
 
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
@@ -170,22 +213,49 @@ class DirtSlot(isGrass: Boolean) : BoardSlot(if (isGrass) Material.GRASS_BLOCK e
 
 }
 
-abstract class GemSlot(name: String, material: Material) : BoardSlot(material, 0, BreakLevel.UNBREAKABLE)
+abstract class GemSlot(itemStack: ItemStack) : BoardSlot(itemStack, 0, BreakLevel.UNBREAKABLE)
 {
 	val Stats = ArrayList<StatInstance>()
 
 	init
 	{
-		Item.item.meta {
-			this.name = name
+		GuiItem.Item.item.meta {
 			this.addLore {
-				Stats.forEach { +it.GetStat()?.GetLoreString(it)!! } // TODO better way? thinking removing stat if deserialized
+				Stats.forEach { +it.GetStat().GetLoreString(it) } // TODO better way? thinking removing stat if deserialized
 			}
 		}
 	}
+
+	constructor() : this(ItemStack(Material.AIR))
 }
 
-class DiamondSlot : GemSlot("${KColors.LIGHTSKYBLUE}Diamond Gem", Material.DIAMOND_BLOCK)
+class DiamondSlot : GemSlot(itemStack(Material.DIAMOND_BLOCK) {
+	meta {
+		name = "${KColors.LIGHTSKYBLUE}Diamond Gem"
+	}
+})
+{
+	init
+	{
+		Stats.add(StatRegistry.VANILLA_STAT.NewStatInstance(Attribute.GENERIC_ATTACK_DAMAGE, 1.0, AttributeModifier.Operation.ADD_NUMBER))
+	}
+
+	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
+	{
+	}
+
+	override fun OnBreak(x: Int, y: Int, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent)
+	{
+	}
+
+	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean = true
+}
+
+class EmeraldSlot : GemSlot(itemStack(Material.EMERALD_BLOCK) {
+	meta {
+		name = "${KColors.MEDIUMSPRINGGREEN}Emerald Gem"
+	}
+})
 {
 	init
 	{
@@ -203,12 +273,12 @@ class DiamondSlot : GemSlot("${KColors.LIGHTSKYBLUE}Diamond Gem", Material.DIAMO
 	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean = true
 }
 
-class EmeraldSlot : GemSlot("${KColors.MEDIUMSPRINGGREEN}Emerald Gem", Material.EMERALD_BLOCK)
-{
-	init
-	{
+class RedstoneSlot : GemSlot(itemStack(Material.REDSTONE_BLOCK) {
+	meta {
+		name = "${KColors.DARKRED}Ruby Gem"
 	}
-
+})
+{
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
 	{
 	}
@@ -220,12 +290,12 @@ class EmeraldSlot : GemSlot("${KColors.MEDIUMSPRINGGREEN}Emerald Gem", Material.
 	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean = true
 }
 
-class RedstoneSlot : GemSlot("${KColors.DARKRED}Ruby Gem", Material.REDSTONE_BLOCK)
-{
-	init
-	{
+class LapisSlot : GemSlot(itemStack(Material.LAPIS_BLOCK) {
+	meta {
+		name = "${KColors.DARKBLUE}Sapphire Gem"
 	}
-
+})
+{
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
 	{
 	}
@@ -237,12 +307,12 @@ class RedstoneSlot : GemSlot("${KColors.DARKRED}Ruby Gem", Material.REDSTONE_BLO
 	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean = true
 }
 
-class LapisSlot : GemSlot("${KColors.DARKBLUE}Sapphire Gem", Material.LAPIS_BLOCK)
-{
-	init
-	{
+class AmethystSlot : GemSlot(itemStack(Material.AMETHYST_BLOCK) {
+	meta {
+		name = "${KColors.DARKPURPLE}Amethyst Gem"
 	}
-
+})
+{
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
 	{
 	}
@@ -254,8 +324,15 @@ class LapisSlot : GemSlot("${KColors.DARKBLUE}Sapphire Gem", Material.LAPIS_BLOC
 	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean = true
 }
 
-class AmethystSlot : GemSlot("${KColors.DARKPURPLE}Amethyst Gem", Material.AMETHYST_BLOCK)
+abstract class RuneSlot(itemStack: ItemStack) : GemSlot(itemStack)
+
+class HealthRuneSlot(itemStack: ItemStack) : RuneSlot(itemStack)
 {
+	init
+	{
+		Stats.add(StatRegistry.VANILLA_STAT.NewStatInstance(Attribute.GENERIC_MAX_HEALTH, 1.0, AttributeModifier.Operation.ADD_NUMBER))
+	}
+
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
 	{
 	}
@@ -264,5 +341,31 @@ class AmethystSlot : GemSlot("${KColors.DARKPURPLE}Amethyst Gem", Material.AMETH
 	{
 	}
 
-	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean = true
+	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean
+	{
+		return true
+	}
+
+}
+
+class DamageRuneSlot(itemStack: ItemStack) : RuneSlot(itemStack)
+{
+	init
+	{
+		Stats.add(StatRegistry.VANILLA_STAT.NewStatInstance(Attribute.GENERIC_ATTACK_DAMAGE, 1.0, AttributeModifier.Operation.ADD_NUMBER))
+	}
+
+	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
+	{
+	}
+
+	override fun OnBreak(x: Int, y: Int, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent)
+	{
+	}
+
+	override fun CanPlace(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean
+	{
+		return true
+	}
+
 }

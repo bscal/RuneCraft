@@ -22,7 +22,6 @@ object StatRegistry
 
 	val VANILLA_STAT: VanillaStat = Register(VanillaStat(NamespacedKey(RuneCraft.INSTANCE, "vanilla_stat"))) as VanillaStat
 	val POTION_STAT: PotionStat = Register(PotionStat(NamespacedKey(RuneCraft.INSTANCE, "potion_stat"))) as PotionStat
-
 	val EARTH_SHOCK_STAT: SpellStat = Register(
 		SpellStat(NamespacedKey(RuneCraft.INSTANCE, "earthshock_stat"), "Earth Shock", 3, SpellType.DAMAGE_DONE, ChanceCondition(),
 			AreaTarget(), DamageAction())) as SpellStat
@@ -122,14 +121,14 @@ class VanillaStat(id: NamespacedKey) : BaseStat(id)
 	override fun ApplyToItemStack(instance: StatInstance, itemStack: ItemStack)
 	{
 		val meta = itemStack.itemMeta
-		val attr = Attribute.valueOf(instance.additionalData[ATTRIBUTE_KEY, NBTDataType.STRING] ?: return)
+		val attr = Attribute.valueOf(instance.AdditionalData[ATTRIBUTE_KEY, NBTDataType.STRING] ?: return)
 		meta.addAttributeModifier(attr, AttributeModifier(Id.key, instance.Value, instance.Operation))
 		itemStack.itemMeta = meta
 	}
 
 	override fun GetLocalName(instance: StatInstance): String
 	{
-		var attribute = instance.additionalData[ATTRIBUTE_KEY, NBTDataType.STRING] ?: return "NULL"
+		var attribute = instance.AdditionalData[ATTRIBUTE_KEY, NBTDataType.STRING] ?: return "NULL"
 		attribute = attribute.replaceFirst("GENERIC_", "")
 		val split = attribute.split("_")
 		val sb = StringBuilder()

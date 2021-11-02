@@ -6,6 +6,7 @@ import me.bscal.runecraft.*
 import me.bscal.runecraft.items.runeitems.BreakLevel
 import org.bukkit.Material
 import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
 import java.io.Serializable
 import kotlin.random.Random
 
@@ -32,7 +33,7 @@ interface BoardGenerator : Serializable
 
 abstract class BaseBoardGenerator(val FinalValue: Int) : BoardGenerator
 {
-	var BaseSlot = DefaultSlot(Material.STONE, 1, BreakLevel.LEVEL_1)
+	var BaseSlot = DefaultSlot(ItemStack(Material.STONE), 1, BreakLevel.LEVEL_1)
 	val Features: Object2ObjectOpenHashMap<BoardSlot, FeatureData> = Object2ObjectOpenHashMap()
 
 	protected var CurrentValue = 0
@@ -58,7 +59,7 @@ class OverworldBoard : BaseBoardGenerator(8)
 
 		val decided = IntOpenHashSet(board.Slots.size, 1.0f)
 
-		var bedrockCount = Random.nextInt(2, 4)
+		var bedrockCount = Random.nextInt(1, 2)
 		while (bedrockCount > 0)
 		{
 			val key = RuneBoard.PackCoord(Random.nextInt(5), Random.nextInt(5))
@@ -70,7 +71,7 @@ class OverworldBoard : BaseBoardGenerator(8)
 			}
 		}
 
-		var gemCount = Random.nextInt(2, 3)
+		var gemCount = 1
 		while (gemCount > 0)
 		{
 			val key = RuneBoard.PackCoord(Random.nextInt(5), Random.nextInt(5))
@@ -79,6 +80,18 @@ class OverworldBoard : BaseBoardGenerator(8)
 				decided.add(key)
 				board.Slots[key] = DiamondSlot()
 				gemCount--
+			}
+		}
+
+		var emptySlot = Random.nextInt(0, 1)
+		while (emptySlot > 0)
+		{
+			val key = RuneBoard.PackCoord(Random.nextInt(5), Random.nextInt(5))
+			if (!decided.contains(key))
+			{
+				decided.add(key)
+				board.SetEmpty(key)
+				emptySlot--
 			}
 		}
 	}

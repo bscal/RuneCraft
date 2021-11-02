@@ -9,16 +9,38 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.*
 import kotlinx.serialization.protobuf.ProtoBuf
+import me.bscal.runecraft.RuneCraft
 import net.axay.kspigot.data.NBTData
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.persistence.PersistentDataAdapterContext
 import org.bukkit.persistence.PersistentDataType
+import java.io.Externalizable
+import java.io.ObjectInput
+import java.io.ObjectOutput
 
-@Serializable(StatInstanceSerializer::class) data class StatInstance(val Id: NamespacedKey, var Value: Double,
-	val Operation: AttributeModifier.Operation, var additionalData: NBTData)
+@Serializable(StatInstanceSerializer::class) data class StatInstance(var Id: NamespacedKey, var Value: Double,
+	var Operation: AttributeModifier.Operation, var AdditionalData: NBTData) : Externalizable
 {
+	constructor() : this(NamespacedKey(RuneCraft.INSTANCE, "NULL"), 0.0, AttributeModifier.Operation.ADD_NUMBER, NBTData())
+
 	fun GetStat(): BaseStat = StatRegistry.Registry[Id]!!
+
+	override fun writeExternal(out: ObjectOutput?)
+	{
+		out?.writeUTF(Id.asString())
+		out?.writeDouble(Value)
+		out?.writeObject(Operation)
+		out?.writeUTF(AdditionalData.serialize())
+	}
+
+	override fun readExternal(input: ObjectInput?)
+	{
+		Id = NamespacedKey.fromString(input?.readUTF()!!)!!
+		Value = input.readDouble()
+		Operation = input.readObject() as AttributeModifier.Operation
+		AdditionalData = NBTData.deserialize(input.readUTF())
+	}
 }
 
 class StatInstanceListTagType : PersistentDataType<ByteArray, List<StatInstance>>
@@ -97,7 +119,7 @@ object StatInstanceSerializer : KSerializer<StatInstance>
 			encodeStringElement(descriptor, 0, value.Id.asString())
 			encodeDoubleElement(descriptor, 1, value.Value)
 			encodeStringElement(descriptor, 2, value.Operation.name)
-			encodeStringElement(descriptor, 3, value.additionalData.serialize())
+			encodeStringElement(descriptor, 3, value.AdditionalData.serialize())
 		}
 	}
 }

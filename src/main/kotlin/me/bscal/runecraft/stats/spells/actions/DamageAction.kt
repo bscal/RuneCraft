@@ -12,9 +12,9 @@ class DamageAction : SpellCastAction
 	{
 		if (targets.isNullOrEmpty()) return
 
-		val level = instance.additionalData["level", NBTDataType.INT] ?: 0
-		val damage = instance.additionalData["damage", NBTDataType.DOUBLE] ?: 0.0
-		val maxTargets = instance.additionalData["maxTargets", NBTDataType.INT] ?: 5
+		val level = instance.AdditionalData["level", NBTDataType.INT] ?: 0
+		val damage = instance.AdditionalData["damage", NBTDataType.DOUBLE] ?: 0.0
+		val maxTargets = instance.AdditionalData["maxTargets", NBTDataType.INT] ?: 5
 		if (level < 1 || damage < 1.0) return
 
 		val totalTargets = maxTargets.coerceAtMost(targets.size)

@@ -6,14 +6,16 @@ import com.github.stefvanschie.inventoryframework.pane.StaticPane
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
-import me.bscal.runecraft.*
+import me.bscal.runecraft.Rune
+import me.bscal.runecraft.RuneCraft
 import me.bscal.runecraft.gui.GuiItems
+import me.bscal.runecraft.items.customitems.CustomId
+import me.bscal.runecraft.items.customitems.CustomItems
 import me.bscal.runecraft.items.runeitems.BreakLevel
 import me.bscal.runecraft.items.runeitems.RuneTool
-import me.bscal.runecraft.stats.addStat
+import me.bscal.runecraft.utils.addStat
 import net.axay.kspigot.chat.KColors
-import net.axay.kspigot.items.*
+import net.axay.kspigot.items.setLore
 import net.axay.kspigot.sound.sound
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
@@ -25,7 +27,6 @@ import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.ItemStack
 import java.util.*
 import java.util.logging.Level
-import kotlin.collections.ArrayList
 import kotlin.random.Random
 
 const val SMALL_RUNE_SIZE = 4 * 4
@@ -77,18 +78,15 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 				RuneBoardCache.remove(player.uniqueId, this)
 				Rune.Serialize(runeItemStack)
 			}
-			Gui?.setOnTopClick {
-				it.isCancelled = true
-			}
+			Gui?.setOnTopClick { it.isCancelled = true }
 
 			CreateHeaderPanel()
 			CreateSeparatorPanel()
 			CreateRunePanel()
 
 			RuneBoardCache[player.uniqueId] = this
-			Gui?.show(player)
 		}
-		else Gui?.show(player)
+		Gui?.show(player)
 	}
 
 	fun CanBreak(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean
@@ -98,12 +96,12 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 
 	fun OnBreak(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent)
 	{
-		itemStack.durability
 		tool.Deincremeant(itemStack)
-		RemoveItem(x, y)
-		AddItem(x, y, LineSlot(Material.WHITE_CONCRETE))
+		SetEmpty(x, y)
+		//RemoveItem(x, y)
+		//AddItem(x, y, LineSlot(Material.WHITE_CONCRETE))
 		AddInstability(slot.GetInstabilityLost())
-		FindLine(x, y)
+		//FindLine(x, y)
 		Update()
 
 		Gui?.update()
@@ -127,7 +125,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		LineGems.forEach {
 			val slot = Slots[it] as GemSlot
 			slot.Stats.forEach { stat ->
-				(Rune.Stats as ObjectOpenHashSet).addStat(stat)
+				Rune.Stats.addStat(stat)
 			}
 		}
 
@@ -143,16 +141,6 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 
 	fun UpdateBoardSlots()
 	{
-	}
-
-	fun Serialize()
-	{
-
-	}
-
-	fun Deserialize()
-	{
-
 	}
 
 	fun FindLine(x: Int, y: Int)
@@ -230,6 +218,20 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	fun RemoveItem(x: Int, y: Int)
 	{        //Slots.remove(x or (y shl 16))
 		RunePanel.removeItem(x, y)
+		Slots.removeAt(PackCoord(x, y))
+	}
+
+	fun SetEmpty(x: Int, y: Int)
+	{
+		RunePanel.removeItem(x, y)
+		Slots[PackCoord(x, y)] = EmptySlot()
+	}
+
+	fun SetEmpty(key: Int)
+	{
+		val coords = UnpackCoord(key)
+		RunePanel.removeItem(coords[0], coords[1])
+		Slots[key] = EmptySlot()
 	}
 
 	fun AddItem(x: Int, y: Int, slot: BoardSlot)
@@ -243,11 +245,28 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	private fun CreateRunePanel()
 	{
 		RunePanel = StaticPane(2, 0, 6, 6)
+		RunePanel.setOnClick {
+			it.isCancelled = true
+			val slotItem = it.currentItem
+			val cursorItem = it.cursor ?: return@setOnClick
+
+			if (slotItem != null || !RuneItems.RuneItemsSet.contains(CustomId.FromItemStack(cursorItem))) return@setOnClick
+			val x = it.slot % 8
+			val y = it.slot / 8
+			RuneCraft.Log(Level.INFO, "$x $y")
+			val runeItem: RuneItem = CustomItems.GetByItemStack(cursorItem) as RuneItem
+			RunePanel.removeItem(x, y)
+			RunePanel.addItem(runeItem.BoardSlot.Item, x, y)
+			Slots[PackCoord(x, y)] = runeItem.BoardSlot
+			cursorItem.amount = cursorItem.amount - 1
+		}
 		for (i in 0 until Slots.size)
 		{
 			val xy = UnpackCoord(i)
+			if (Slots[i].Item.item.type.isAir) continue
 			RunePanel.addItem(Slots[i].Item.copy(), xy[0], xy[1])
 		}
+
 		Gui?.addPane(RunePanel)
 	}
 

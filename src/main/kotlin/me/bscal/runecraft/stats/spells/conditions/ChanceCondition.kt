@@ -10,7 +10,7 @@ class ChanceCondition : SpellCondition
 {
 	override fun CanCast(caster: Entity, instance: StatInstance): Boolean
 	{
-		val chance: Double = instance.additionalData["chance", NBTDataType.DOUBLE] ?: 0.0
+		val chance: Double = instance.AdditionalData["chance", NBTDataType.DOUBLE] ?: 0.0
 		if (chance <= 0.0) return false
 		return chance > Random.nextDouble()
 	}

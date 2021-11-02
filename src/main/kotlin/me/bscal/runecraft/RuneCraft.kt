@@ -1,6 +1,7 @@
 package me.bscal.runecraft
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import me.bscal.runecraft.gui.runeboard.RuneItems
 import me.bscal.runecraft.gui.runecrafter.CrafterGUI
 import me.bscal.runecraft.items.customitems.CustomItemListener
 import me.bscal.runecraft.items.runeitems.RuneCraftItems
@@ -50,6 +51,7 @@ class RuneCraft : KSpigot()
 		LogDebug(Level.INFO, "Starting in DEBUG mode!")
 
 		RuneCraftItems.RegisterRuneCustomItems()
+		RuneItems.Register()
 
 		pluginManager.registerEvents(CustomItemListener(), this)
 
@@ -64,12 +66,14 @@ class RuneCraft : KSpigot()
 			}
 		}
 
-		command("rc_potion_test") {
+		command("rc_testing") {
 			runs {
 				try {
+					val hpRune = RuneItems.HealthRune.NewStack()
+					val dmgRune = RuneItems.DamageRune.NewStack()
 					val stat = StatRegistry.POTION_STAT.NewStatInstance(PotionEffect(PotionEffectType.FIRE_RESISTANCE, 5000, 1))
 					val rune = RuneCraftItems.CARVED_RUNE.NewStack(ObjectOpenHashSet(setOf(stat)))
-					player.give(rune)
+					player.give(hpRune, dmgRune, rune)
 				}
 				catch (e: Exception)
 				{

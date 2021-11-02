@@ -106,16 +106,16 @@ class PotionStat(namespacedKey: NamespacedKey) : BaseStat(namespacedKey)
 	{
 		if (!IsSame(instance, other)) return instance
 
-		val maxAmp = instance.additionalData[MAX_AMP_KEY, NBTDataType.INT] ?: 1
+		val maxAmp = instance.AdditionalData[MAX_AMP_KEY, NBTDataType.INT] ?: 1
 		val newAmp = (instance.Value + other.Value).coerceAtMost(maxAmp.toDouble())
 		if (newAmp > instance.Value)
 		{
-			val bytes = instance.additionalData[EFFECT_KEY, NBTDataType.BYTE_ARRAY]
+			val bytes = instance.AdditionalData[EFFECT_KEY, NBTDataType.BYTE_ARRAY]
 			if (bytes == null || bytes.isEmpty()) return instance
 			instance.Value = newAmp
 			val effect: PotionEffect = ProtoBuf.decodeFromByteArray(PotionEffectSerializer, bytes)
 			val newEffect = PotionEffect(effect.type, effect.duration, newAmp.toInt(), effect.isAmbient, effect.hasParticles())
-			instance.additionalData[EFFECT_KEY, NBTDataType.BYTE_ARRAY] = ProtoBuf.encodeToByteArray(PotionEffectSerializer, newEffect)
+			instance.AdditionalData[EFFECT_KEY, NBTDataType.BYTE_ARRAY] = ProtoBuf.encodeToByteArray(PotionEffectSerializer, newEffect)
 			return instance
 		}
 		return instance
@@ -131,7 +131,7 @@ class PotionStat(namespacedKey: NamespacedKey) : BaseStat(namespacedKey)
 
 	override fun ApplyToItemStack(instance: StatInstance, itemStack: ItemStack)
 	{
-		val bytes = instance.additionalData[EFFECT_KEY, NBTDataType.BYTE_ARRAY]
+		val bytes = instance.AdditionalData[EFFECT_KEY, NBTDataType.BYTE_ARRAY]
 		if (bytes == null || bytes.isEmpty()) return
 		val effect: PotionEffect = ProtoBuf.decodeFromByteArray(PotionEffectSerializer, bytes)
 		itemStack.editMeta {
@@ -141,7 +141,7 @@ class PotionStat(namespacedKey: NamespacedKey) : BaseStat(namespacedKey)
 
 	override fun GetLocalName(instance: StatInstance): String
 	{
-		val bytes = instance.additionalData[EFFECT_KEY, NBTDataType.BYTE_ARRAY]
+		val bytes = instance.AdditionalData[EFFECT_KEY, NBTDataType.BYTE_ARRAY]
 		if (bytes == null || bytes.isEmpty()) return ""
 		val effect: PotionEffect = ProtoBuf.decodeFromByteArray(PotionEffectSerializer, bytes)
 		val formattedName = effect.type.name.replace("_", " ")
