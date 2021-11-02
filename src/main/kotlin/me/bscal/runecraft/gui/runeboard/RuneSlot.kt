@@ -38,17 +38,18 @@ interface IBoardSlot : Serializable
 	fun GetInstabilityLost(): Int
 }
 
-open class GuiItemWrapper : Externalizable
+open class GuiItemWrapper() : Externalizable
 {
 	@Transient lateinit var Item: GuiItem; protected set
 
-	constructor(itemStack: ItemStack)
+	constructor(itemStack: ItemStack) : this()
 	{
 		Item = GuiItem(itemStack)
 	}
 
 	override fun writeExternal(out: ObjectOutput?)
 	{
+		if (Item.item.type.isAir) return
 		out?.write(Item.item.serializeAsBytes())
 	}
 
@@ -56,10 +57,40 @@ open class GuiItemWrapper : Externalizable
 	{
 		try
 		{
-			var bytes = ByteArray(input?.available() ?: 255)
+			val bytes = ByteArray(input?.available() ?: 255)
 			input?.read(bytes)
-			val itemStack = ItemStack.deserializeBytes(bytes)
-			Item = GuiItem(itemStack)
+			Item = if (bytes.isEmpty())
+			{
+				GuiItem(ItemStack(Material.AIR))
+			}
+			else
+			{
+				val itemStack = ItemStack.deserializeBytes(bytes)
+				GuiItem(itemStack) {
+					it.result = Event.Result.DENY
+					if (it.clickedInventory != null && it.clickedInventory?.type == InventoryType.CHEST && it.isLeftClick)
+					{
+						val x = 5.coerceAtMost(0.coerceAtLeast(it.slot % 9 - 2))
+						val y = it.slot / 9
+						val key = RuneBoard.PackCoord(x, y)
+						val board = RuneBoardCache[it.whoClicked.uniqueId]
+						if (board != null && board.GetGuiTitle() == it.view.title)
+						{
+							val tool: ItemStack = it.cursor ?: ItemStack(Material.AIR)
+							val customItem = CustomItems.GetByItemStack(tool)
+							if (customItem is RuneTool)
+							{
+								val slot = board.Slots[key]
+								if (board.CanBreak(x, y, slot, tool, customItem, it))
+								{
+									slot.OnBreak(x, y, tool, customItem, it)
+									board.OnBreak(x, y, slot, tool, customItem, it)
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 		catch (e: Exception)
 		{
@@ -76,33 +107,30 @@ abstract class BoardSlot(itemStack: ItemStack, val InstabilityLost: Int, val Bre
 		@JvmStatic val serialVersionID = 1L
 	}
 
-	val GuiItem: GuiItemWrapper = GuiItemWrapper(itemStack);
+	var GuiItem: GuiItemWrapper = GuiItemWrapper(itemStack);
 
 	init
 	{
-		GuiItem.Item.setAction(::OnClick)
-	}
-
-	private fun OnClick(it: InventoryClickEvent)
-	{
-		it.result = Event.Result.DENY
-		if (it.clickedInventory != null && it.clickedInventory?.type == InventoryType.CHEST && it.isLeftClick)
-		{
-			val x = 5.coerceAtMost(0.coerceAtLeast(it.slot % 9 - 2))
-			val y = it.slot / 9
-			val key = RuneBoard.PackCoord(x, y)
-			val board = RuneBoardCache[it.whoClicked.uniqueId]
-			if (board != null && board.GetGuiTitle() == it.view.title)
+		GuiItem.Item.setAction {
+			it.result = Event.Result.DENY
+			if (it.clickedInventory != null && it.clickedInventory?.type == InventoryType.CHEST && it.isLeftClick)
 			{
-				val tool: ItemStack = it.cursor ?: ItemStack(Material.AIR)
-				val customItem = CustomItems.GetByItemStack(tool)
-				if (customItem is RuneTool)
+				val x = 5.coerceAtMost(0.coerceAtLeast(it.slot % 9 - 2))
+				val y = it.slot / 9
+				val key = RuneBoard.PackCoord(x, y)
+				val board = RuneBoardCache[it.whoClicked.uniqueId]
+				if (board != null && board.GetGuiTitle() == it.view.title)
 				{
-					val slot = board.Slots[key]
-					if (board.CanBreak(x, y, slot, tool, customItem, it))
+					val tool: ItemStack = it.cursor ?: ItemStack(Material.AIR)
+					val customItem = CustomItems.GetByItemStack(tool)
+					if (customItem is RuneTool)
 					{
-						slot.OnBreak(x, y, tool, customItem, it)
-						board.OnBreak(x, y, slot, tool, customItem, it)
+						val slot = board.Slots[key]
+						if (board.CanBreak(x, y, slot, tool, customItem, it))
+						{
+							slot.OnBreak(x, y, tool, customItem, it)
+							board.OnBreak(x, y, slot, tool, customItem, it)
+						}
 					}
 				}
 			}
@@ -115,7 +143,14 @@ abstract class BoardSlot(itemStack: ItemStack, val InstabilityLost: Int, val Bre
 }
 
 class EmptySlot() : BoardSlot(ItemStack(Material.AIR), 0, BreakLevel.UNBREAKABLE)
-{
+{ //
+	//	@Throws(IOException::class, ClassNotFoundException::class)
+	//	private fun readObject(objIn: ObjectInputStream)
+	//	{
+	//		objIn.defaultReadObject()
+	//		GuiItem = GuiItemWrapper(ItemStack(Material.AIR))
+	//	}
+
 	override fun Update(item: GuiItem, player: Player, runeBoard: RuneBoard)
 	{
 	}

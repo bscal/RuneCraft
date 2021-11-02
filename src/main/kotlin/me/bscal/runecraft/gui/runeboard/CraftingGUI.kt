@@ -18,7 +18,6 @@ import net.axay.kspigot.chat.KColors
 import net.axay.kspigot.items.setLore
 import net.axay.kspigot.sound.sound
 import net.kyori.adventure.text.Component
-import org.bukkit.Material
 import org.bukkit.Sound
 import org.bukkit.SoundCategory
 import org.bukkit.entity.Player
@@ -97,11 +96,9 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	fun OnBreak(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent)
 	{
 		tool.Deincremeant(itemStack)
-		SetEmpty(x, y)
-		//RemoveItem(x, y)
+		SetEmpty(x, y)		//RemoveItem(x, y)
 		//AddItem(x, y, LineSlot(Material.WHITE_CONCRETE))
-		AddInstability(slot.GetInstabilityLost())
-		//FindLine(x, y)
+		AddInstability(slot.GetInstabilityLost())		//FindLine(x, y)
 		Update()
 
 		Gui?.update()
@@ -237,7 +234,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	fun AddItem(x: Int, y: Int, slot: BoardSlot)
 	{
 		Slots[PackCoord(x, y)] = slot
-		RunePanel.addItem(slot.Item, x, y)
+		RunePanel.addItem(slot.GuiItem.Item.copy(), x, y)
 	}
 
 	fun GetGuiTitle(): String = Gui?.title ?: "NULL"
@@ -246,25 +243,26 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	{
 		RunePanel = StaticPane(2, 0, 6, 6)
 		RunePanel.setOnClick {
-			it.isCancelled = true
 			val slotItem = it.currentItem
 			val cursorItem = it.cursor ?: return@setOnClick
 
 			if (slotItem != null || !RuneItems.RuneItemsSet.contains(CustomId.FromItemStack(cursorItem))) return@setOnClick
-			val x = it.slot % 8
-			val y = it.slot / 8
+			it.isCancelled = true
+			val x = 5.coerceAtMost(0.coerceAtLeast(it.slot % 9 - 2))
+			val y = it.slot / 9
 			RuneCraft.Log(Level.INFO, "$x $y")
 			val runeItem: RuneItem = CustomItems.GetByItemStack(cursorItem) as RuneItem
 			RunePanel.removeItem(x, y)
-			RunePanel.addItem(runeItem.BoardSlot.Item, x, y)
 			Slots[PackCoord(x, y)] = runeItem.BoardSlot
+			RunePanel.addItem(runeItem.BoardSlot.GuiItem.Item.copy(), x, y)
 			cursorItem.amount = cursorItem.amount - 1
+			Gui?.update()
 		}
-		for (i in 0 until Slots.size)
+		for (i in 0 until Size)
 		{
 			val xy = UnpackCoord(i)
-			if (Slots[i].Item.item.type.isAir) continue
-			RunePanel.addItem(Slots[i].Item.copy(), xy[0], xy[1])
+			if (Slots[i] is EmptySlot) continue
+			RunePanel.addItem(Slots[i].GuiItem.Item.copy(), xy[0], xy[1])
 		}
 
 		Gui?.addPane(RunePanel)
