@@ -9,6 +9,10 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import me.bscal.runecraft.Rune
 import me.bscal.runecraft.RuneCraft
 import me.bscal.runecraft.gui.GuiItems
+import me.bscal.runecraft.gui.runeboard.slots.BoardSlot
+import me.bscal.runecraft.gui.runeboard.slots.EmptySlot
+import me.bscal.runecraft.gui.runeboard.slots.GemSlot
+import me.bscal.runecraft.gui.runeboard.slots.LineSlot
 import me.bscal.runecraft.items.customitems.CustomId
 import me.bscal.runecraft.items.customitems.CustomItems
 import me.bscal.runecraft.items.runeitems.BreakLevel
@@ -96,11 +100,9 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	fun OnBreak(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent)
 	{
 		tool.Deincremeant(itemStack)
-		SetEmpty(x, y)		//RemoveItem(x, y)
-		//AddItem(x, y, LineSlot(Material.WHITE_CONCRETE))
-		AddInstability(slot.GetInstabilityLost())		//FindLine(x, y)
+		SetEmpty(x, y)
+		AddInstability(slot.GetInstabilityLost())
 		Update()
-
 		Gui?.update()
 	}
 
@@ -234,7 +236,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	fun AddItem(x: Int, y: Int, slot: BoardSlot)
 	{
 		Slots[PackCoord(x, y)] = slot
-		RunePanel.addItem(slot.GuiItem.Item.copy(), x, y)
+		RunePanel.addItem(slot.GuiItemWrapper.GuiItem.copy(), x, y)
 	}
 
 	fun GetGuiTitle(): String = Gui?.title ?: "NULL"
@@ -254,7 +256,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 			val runeItem: RuneItem = CustomItems.GetByItemStack(cursorItem) as RuneItem
 			RunePanel.removeItem(x, y)
 			Slots[PackCoord(x, y)] = runeItem.BoardSlot
-			RunePanel.addItem(runeItem.BoardSlot.GuiItem.Item.copy(), x, y)
+			RunePanel.addItem(runeItem.BoardSlot.GuiItemWrapper.GuiItem.copy(), x, y)
 			cursorItem.amount = cursorItem.amount - 1
 			Gui?.update()
 		}
@@ -262,7 +264,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		{
 			val xy = UnpackCoord(i)
 			if (Slots[i] is EmptySlot) continue
-			RunePanel.addItem(Slots[i].GuiItem.Item.copy(), xy[0], xy[1])
+			RunePanel.addItem(Slots[i].GuiItemWrapper.GuiItem.copy(), xy[0], xy[1])
 		}
 
 		Gui?.addPane(RunePanel)

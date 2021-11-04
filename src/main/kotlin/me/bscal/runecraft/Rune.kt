@@ -6,7 +6,7 @@ import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.*
 import kotlinx.serialization.protobuf.ProtoBuf
-import me.bscal.runecraft.gui.runeboard.BoardSlot
+import me.bscal.runecraft.gui.runeboard.slots.BoardSlot
 import me.bscal.runecraft.gui.runeboard.LARGE_RUNE_SIZE
 import me.bscal.runecraft.gui.runeboard.RuneBoard
 import me.bscal.runecraft.stats.StatInstance
@@ -25,29 +25,6 @@ import java.util.logging.Level
 
 @Serializable class Rune(val Type: RuneType)
 {
-	companion object
-	{
-		val RuneKey = NamespacedKey(RuneCraft.INSTANCE, "rune_data")
-		val BoardSlotKey = NamespacedKey(RuneCraft.INSTANCE, "board_slot_data")
-
-		fun Deserialize(itemStack: ItemStack): Rune?
-		{
-			if (itemStack.hasItemMeta())
-			{
-				val meta = itemStack.itemMeta
-				val rune = meta.persistentDataContainer.get(RuneKey, RuneItemTagType())
-				val board = meta.persistentDataContainer.get(BoardSlotKey, RuneBoardTagType())
-				if (board != null)
-				{
-					if (board.isEmpty()) rune?.SetSlots(ArrayList())
-					else rune?.SetSlots(board.toList() as ArrayList<BoardSlot>) /* = java.util.ArrayList<me.bscal.runecraft.gui.BoardSlot> */
-					return rune
-				}
-			}
-			return null
-		}
-	}
-
 	var Rarity: Int = 0
 	var Instability: Int = 0
 	var Color: Int = 0
@@ -89,6 +66,28 @@ import java.util.logging.Level
 		Board.Slots = slots
 	}
 
+	companion object
+	{
+		val RuneKey = NamespacedKey(RuneCraft.INSTANCE, "rune_data")
+		val BoardSlotKey = NamespacedKey(RuneCraft.INSTANCE, "board_slot_data")
+
+		fun Deserialize(itemStack: ItemStack): Rune?
+		{
+			if (itemStack.hasItemMeta())
+			{
+				val meta = itemStack.itemMeta
+				val rune = meta.persistentDataContainer.get(RuneKey, RuneItemTagType())
+				val board = meta.persistentDataContainer.get(BoardSlotKey, RuneBoardTagType())
+				if (board != null)
+				{
+					if (board.isEmpty()) rune?.SetSlots(ArrayList())
+					else rune?.SetSlots(board.toList() as ArrayList<BoardSlot>) /* = java.util.ArrayList<me.bscal.runecraft.gui.BoardSlot> */
+					return rune
+				}
+			}
+			return null
+		}
+	}
 }
 
 @Serializable @JvmRecord data class RuneType(val Name: String)

@@ -3,6 +3,7 @@ package me.bscal.runecraft.gui.runeboard
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import me.bscal.runecraft.*
+import me.bscal.runecraft.gui.runeboard.slots.*
 import me.bscal.runecraft.items.runeitems.BreakLevel
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -59,10 +60,10 @@ class OverworldBoard : BaseBoardGenerator(8)
 
 		val decided = IntOpenHashSet(board.Slots.size, 1.0f)
 
-		var bedrockCount = Random.nextInt(1, 2)
+		var bedrockCount = Random.nextInt(1, 3)
 		while (bedrockCount > 0)
 		{
-			val key = RuneBoard.PackCoord(Random.nextInt(5), Random.nextInt(5))
+			val key = RuneBoard.PackCoord(Random.nextInt(6), Random.nextInt(6))
 			if (!decided.contains(key))
 			{
 				decided.add(key)
@@ -74,7 +75,7 @@ class OverworldBoard : BaseBoardGenerator(8)
 		var gemCount = 1
 		while (gemCount > 0)
 		{
-			val key = RuneBoard.PackCoord(Random.nextInt(5), Random.nextInt(5))
+			val key = RuneBoard.PackCoord(Random.nextInt(6), Random.nextInt(6))
 			if (!decided.contains(key))
 			{
 				decided.add(key)
@@ -83,10 +84,10 @@ class OverworldBoard : BaseBoardGenerator(8)
 			}
 		}
 
-		var emptySlot = Random.nextInt(0, 1)
+		var emptySlot = Random.nextInt(0, 2)
 		while (emptySlot > 0)
 		{
-			val key = RuneBoard.PackCoord(Random.nextInt(5), Random.nextInt(5))
+			val key = RuneBoard.PackCoord(Random.nextInt(6), Random.nextInt(6))
 			if (!decided.contains(key))
 			{
 				decided.add(key)

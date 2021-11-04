@@ -1,6 +1,9 @@
 package me.bscal.runecraft.gui.runeboard
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import me.bscal.runecraft.gui.runeboard.slots.BoardSlot
+import me.bscal.runecraft.gui.runeboard.slots.DamageRuneSlot
+import me.bscal.runecraft.gui.runeboard.slots.HealthRuneSlot
 import me.bscal.runecraft.items.customitems.CustomId
 import me.bscal.runecraft.items.customitems.CustomItem
 import me.bscal.runecraft.items.customitems.CustomItems
