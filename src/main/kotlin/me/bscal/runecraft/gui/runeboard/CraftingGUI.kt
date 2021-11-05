@@ -16,9 +16,11 @@ import me.bscal.runecraft.gui.runeboard.slots.LineSlot
 import me.bscal.runecraft.items.customitems.CustomId
 import me.bscal.runecraft.items.customitems.CustomItems
 import me.bscal.runecraft.items.runeitems.BreakLevel
+import me.bscal.runecraft.items.runeitems.RuneCraftItems
 import me.bscal.runecraft.items.runeitems.RuneTool
 import me.bscal.runecraft.utils.addStat
 import net.axay.kspigot.chat.KColors
+import net.axay.kspigot.extensions.bukkit.give
 import net.axay.kspigot.items.setLore
 import net.axay.kspigot.sound.sound
 import net.kyori.adventure.text.Component
@@ -47,9 +49,6 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		fun PackCoord(x: Int, y: Int): Int = (x + y * 6) //.coerceAtLeast(0).coerceAtMost(5) I leave out to find bugs
 		fun UnpackCoord(key: Int): Array<Int> = arrayOf(key % 6, key / 6)
 	}
-
-	var Slots: ArrayList<BoardSlot> = ArrayList(Size)
-
 	private var Gui: ChestGui? = null
 	private var Generator: BoardGenerator? = null
 	private lateinit var RunePanel: StaticPane
@@ -79,7 +78,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 			Gui = ChestGui(6, "${KColors.RED}RuneCraft")
 			Gui?.setOnClose {
 				RuneBoardCache.remove(player.uniqueId, this)
-				Rune.Serialize(runeItemStack)
+				if (!Rune.IsBuilt) Rune.Serialize(runeItemStack)
 			}
 			Gui?.setOnTopClick { it.isCancelled = true }
 
@@ -110,6 +109,16 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	{
 		event.isCancelled = true
 		Rune.IsBuilt = true
+
+		RuneItemStack.amount = RuneItemStack.amount - 1
+		val builtRuneItem = RuneCraftItems.CARVED_RUNE.NewStack(Rune)
+
+		Player.give(builtRuneItem)
+		Player.sound(Sound.BLOCK_ANVIL_HIT)
+		Player.sound(Sound.ENTITY_EXPERIENCE_ORB_PICKUP) {
+			this.volume = .75f
+			this.pitch = .75f
+		}
 	}
 
 	fun Update()
@@ -121,21 +130,22 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 
 	private fun UpdateStats()
 	{
-		LineGems.forEach {
-			val slot = Slots[it] as GemSlot
-			slot.Stats.forEach { stat ->
-				Rune.Stats.addStat(stat)
-			}
-		}
-
-		StatsIcon.item.amount = Rune.Power.toInt()
-		StatsIcon.item.editMeta {
-			it.setLore {
-				Rune.Stats.forEach { stat ->
-					+stat.GetStat()?.GetLoreString(stat)!! // TODO
+		val statIconMeta = StatsIcon.item.itemMeta
+		val statIconLore = statIconMeta.lore()
+		statIconLore?.clear()
+		Rune.Stats.clear()
+		for (slot in Rune.BoardSlots.Slots)
+		{
+			if (slot is GemSlot)
+			{
+				slot.Stats.forEach {
+					Rune.Stats.add(it)
+					statIconLore?.add(Component.text(it.GetStat().GetLoreString(it)))
 				}
 			}
 		}
+		statIconMeta.lore(statIconLore)
+		StatsIcon.item.itemMeta = statIconMeta
 	}
 
 	fun UpdateBoardSlots()
@@ -159,7 +169,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 			visited.add(key)
 
 			var skip = true
-			val slot = Slots[key]
+			val slot = Rune.BoardSlots.Slots[key]
 			if (slot is LineSlot)
 			{
 				LineSlots.add(key)
@@ -217,25 +227,25 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	fun RemoveItem(x: Int, y: Int)
 	{        //Slots.remove(x or (y shl 16))
 		RunePanel.removeItem(x, y)
-		Slots.removeAt(PackCoord(x, y))
+		Rune.BoardSlots.Slots.removeAt(PackCoord(x, y))
 	}
 
 	fun SetEmpty(x: Int, y: Int)
 	{
 		RunePanel.removeItem(x, y)
-		Slots[PackCoord(x, y)] = EmptySlot()
+		Rune.BoardSlots.Slots[PackCoord(x, y)] = EmptySlot()
 	}
 
 	fun SetEmpty(key: Int)
 	{
 		val coords = UnpackCoord(key)
 		RunePanel.removeItem(coords[0], coords[1])
-		Slots[key] = EmptySlot()
+		Rune.BoardSlots.Slots[key] = EmptySlot()
 	}
 
 	fun AddItem(x: Int, y: Int, slot: BoardSlot)
 	{
-		Slots[PackCoord(x, y)] = slot
+		Rune.BoardSlots.Slots[PackCoord(x, y)] = slot
 		RunePanel.addItem(slot.GuiItemWrapper.GuiItem.copy(), x, y)
 	}
 
@@ -255,7 +265,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 			RuneCraft.Log(Level.INFO, "$x $y")
 			val runeItem: RuneItem = CustomItems.GetByItemStack(cursorItem) as RuneItem
 			RunePanel.removeItem(x, y)
-			Slots[PackCoord(x, y)] = runeItem.BoardSlot
+			Rune.BoardSlots.Slots[PackCoord(x, y)] = runeItem.BoardSlot
 			RunePanel.addItem(runeItem.BoardSlot.GuiItemWrapper.GuiItem.copy(), x, y)
 			cursorItem.amount = cursorItem.amount - 1
 			Gui?.update()
@@ -263,8 +273,8 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		for (i in 0 until Size)
 		{
 			val xy = UnpackCoord(i)
-			if (Slots[i] is EmptySlot) continue
-			RunePanel.addItem(Slots[i].GuiItemWrapper.GuiItem.copy(), xy[0], xy[1])
+			if (Rune.BoardSlots.Slots[i] is EmptySlot) continue
+			RunePanel.addItem(Rune.BoardSlots.Slots[i].GuiItemWrapper.GuiItem.copy(), xy[0], xy[1])
 		}
 
 		Gui?.addPane(RunePanel)

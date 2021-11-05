@@ -72,8 +72,10 @@ class RuneCraft : KSpigot()
 					val hpRune = RuneItems.HealthRune.NewStack()
 					val dmgRune = RuneItems.DamageRune.NewStack()
 					val stat = StatRegistry.POTION_STAT.NewStatInstance(PotionEffect(PotionEffectType.FIRE_RESISTANCE, 5000, 1))
-					val rune = RuneCraftItems.CARVED_RUNE.NewStack(ObjectOpenHashSet(setOf(stat)))
-					player.give(hpRune, dmgRune, rune)
+					val rune = Rune(RuneType.Default)
+					rune.Stats = ObjectOpenHashSet(setOf(stat))
+					val runeItem = RuneCraftItems.CARVED_RUNE.NewStack(rune)
+					player.give(hpRune, dmgRune, runeItem)
 				}
 				catch (e: Exception)
 				{

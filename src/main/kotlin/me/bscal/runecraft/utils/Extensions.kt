@@ -1,7 +1,9 @@
 package me.bscal.runecraft.utils
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import me.bscal.runecraft.Rune
 import me.bscal.runecraft.RuneCraft
+import me.bscal.runecraft.RuneItemTagType
 import me.bscal.runecraft.stats.*
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.meta.ItemMeta
@@ -9,13 +11,14 @@ import org.bukkit.inventory.meta.ItemMeta
 fun ObjectOpenHashSet<StatInstance>.addStat(stat: StatInstance)
 {
 	val current = this.get(stat)
-	if (current != null) current.GetStat()?.CombineInstance(stat, current)
+	if (current != null) current.GetStat().CombineInstance(stat, current)
 	else this.add(stat)
 }
 
 // ***********************************************
 // ItemStack Stat
 
+val RuneKey: NamespacedKey = NamespacedKey(RuneCraft.INSTANCE, "rune")
 val CustomStatKey: NamespacedKey = NamespacedKey(RuneCraft.INSTANCE, "custom_stats")
 val SpellStatKey: NamespacedKey = NamespacedKey(RuneCraft.INSTANCE, "spell_stat")
 
@@ -32,7 +35,6 @@ fun ItemMeta.getCustomStat(stat: BaseStat): StatInstance?
 
 fun ItemMeta.setCustomStat(instance: StatInstance)
 {
-	if (instance.GetStat() is CustomStat) return
 	val list = this.getCustomStats()
 	list.add(instance)
 	this.persistentDataContainer[CustomStatKey, StatInstanceListTagType()] = list
@@ -41,9 +43,7 @@ fun ItemMeta.setCustomStat(instance: StatInstance)
 fun ItemMeta.addAllCustomStats(instances: List<StatInstance>)
 {
 	val list = this.getCustomStats()
-	list.addAll(instances.filter {
-		it.GetStat() is CustomStat
-	})
+	list.addAll(instances)
 	this.persistentDataContainer[CustomStatKey, StatInstanceListTagType()] = list
 }
 
@@ -75,4 +75,14 @@ fun ItemMeta.setAllSpells(instances: List<StatInstance>)
 		it.GetStat() is SpellStat
 	})
 	this.persistentDataContainer[SpellStatKey, StatInstanceListTagType()] = list
+}
+
+fun ItemMeta.setRuneData(rune: Rune)
+{
+	this.persistentDataContainer.set(RuneKey, RuneItemTagType(), rune)
+}
+
+fun ItemMeta.getRuneData() : Rune?
+{
+	return this.persistentDataContainer.get(RuneKey, RuneItemTagType())
 }

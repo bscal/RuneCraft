@@ -49,8 +49,8 @@ class OverworldBoard : BaseBoardGenerator(8)
 		for (i in 0 until board.Size)
 		{
 			val y = i / 6
-			if (y < 2 && Random.nextFloat() > .25f) board.Slots.add(i, DirtSlot(y < 1))
-			else board.Slots.add(i, BaseSlot)
+			if (y < 2 && Random.nextFloat() > .25f) board.Rune.BoardSlots.Slots.add(i, DirtSlot(y < 1))
+			else board.Rune.BoardSlots.Slots.add(i, BaseSlot)
 		}
 	}
 
@@ -58,7 +58,7 @@ class OverworldBoard : BaseBoardGenerator(8)
 	{
 		GenerateBase(player, board, rarity)
 
-		val decided = IntOpenHashSet(board.Slots.size, 1.0f)
+		val decided = IntOpenHashSet(board.Rune.BoardSlots.Slots.size, 1.0f)
 
 		var bedrockCount = Random.nextInt(1, 3)
 		while (bedrockCount > 0)
@@ -67,7 +67,7 @@ class OverworldBoard : BaseBoardGenerator(8)
 			if (!decided.contains(key))
 			{
 				decided.add(key)
-				board.Slots[key] = BedrockSlot()
+				board.Rune.BoardSlots.Slots[key] = BedrockSlot()
 				bedrockCount--
 			}
 		}
@@ -79,7 +79,7 @@ class OverworldBoard : BaseBoardGenerator(8)
 			if (!decided.contains(key))
 			{
 				decided.add(key)
-				board.Slots[key] = DiamondSlot()
+				board.Rune.BoardSlots.Slots[key] = DiamondSlot()
 				gemCount--
 			}
 		}

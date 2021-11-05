@@ -6,9 +6,10 @@ import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.*
 import kotlinx.serialization.protobuf.ProtoBuf
-import me.bscal.runecraft.gui.runeboard.slots.BoardSlot
+import me.bscal.runecraft.gui.runeboard.BoardSlots
 import me.bscal.runecraft.gui.runeboard.LARGE_RUNE_SIZE
 import me.bscal.runecraft.gui.runeboard.RuneBoard
+import me.bscal.runecraft.gui.runeboard.slots.BoardSlot
 import me.bscal.runecraft.stats.StatInstance
 import net.axay.kspigot.items.*
 import org.bukkit.NamespacedKey
@@ -32,10 +33,10 @@ import java.util.logging.Level
 	var IsGenerated: Boolean = false
 	var IsBuilt: Boolean = false
 
-	@Serializable(ObjectHashSetSerializer::class)
-	var Stats: ObjectOpenHashSet<StatInstance> = ObjectOpenHashSet()
+	@Serializable(ObjectHashSetSerializer::class) var Stats: ObjectOpenHashSet<StatInstance> = ObjectOpenHashSet()
+	var BoardSlots = BoardSlots()
 
-	@Transient val Board: RuneBoard = RuneBoard(this, LARGE_RUNE_SIZE)
+	@Transient var Board: RuneBoard = RuneBoard(this, LARGE_RUNE_SIZE)
 
 	fun Open(player: Player, runeItemStack: ItemStack)
 	{        //TODO
@@ -57,13 +58,12 @@ import java.util.logging.Level
 		val im = itemStack.itemMeta
 		RuneCraft.LogDebug(Level.INFO, "$this")
 		im.persistentDataContainer.set(RuneKey, RuneItemTagType(), this)
-		im.persistentDataContainer.set(BoardSlotKey, RuneBoardTagType(), Board.Slots.toTypedArray())
 		itemStack.itemMeta = im
 	}
 
-	fun SetSlots(slots: ArrayList<BoardSlot>)
+	fun SetSlots(slots: MutableList<BoardSlot>)
 	{
-		Board.Slots = slots
+		BoardSlots.Slots = slots
 	}
 
 	companion object
@@ -77,13 +77,7 @@ import java.util.logging.Level
 			{
 				val meta = itemStack.itemMeta
 				val rune = meta.persistentDataContainer.get(RuneKey, RuneItemTagType())
-				val board = meta.persistentDataContainer.get(BoardSlotKey, RuneBoardTagType())
-				if (board != null)
-				{
-					if (board.isEmpty()) rune?.SetSlots(ArrayList())
-					else rune?.SetSlots(board.toList() as ArrayList<BoardSlot>) /* = java.util.ArrayList<me.bscal.runecraft.gui.BoardSlot> */
-					return rune
-				}
+				if (rune != null) rune.Board = RuneBoard(rune, LARGE_RUNE_SIZE)
 			}
 			return null
 		}

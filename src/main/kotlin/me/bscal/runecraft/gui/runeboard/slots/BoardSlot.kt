@@ -59,7 +59,7 @@ abstract class BoardSlot(itemStack: ItemStack, val InstabilityLost: Int, val Bre
 					val customItem = CustomItems.GetByItemStack(tool)
 					if (customItem is RuneTool)
 					{
-						val slot = board.Slots[key]
+						val slot = board.Rune.BoardSlots.Slots[key]
 						if (board.CanBreak(x, y, slot, tool, customItem, it))
 						{
 							slot.OnBreak(x, y, tool, customItem, it)
