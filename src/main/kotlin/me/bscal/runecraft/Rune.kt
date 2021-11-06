@@ -11,8 +11,9 @@ import me.bscal.runecraft.gui.runeboard.LARGE_RUNE_SIZE
 import me.bscal.runecraft.gui.runeboard.RuneBoard
 import me.bscal.runecraft.gui.runeboard.slots.BoardSlot
 import me.bscal.runecraft.stats.StatInstance
+import me.bscal.runecraft.utils.getRuneData
+import me.bscal.runecraft.utils.setRuneData
 import net.axay.kspigot.items.*
-import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataAdapterContext
@@ -22,69 +23,73 @@ import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.util.*
-import java.util.logging.Level
 
 @Serializable class Rune(val Type: RuneType)
 {
 	var Rarity: Int = 0
-	var Instability: Int = 0
+	var Instability: Int = 1
 	var Color: Int = 0
 	var Power: Float = 0f
 	var IsGenerated: Boolean = false
 	var IsBuilt: Boolean = false
 
 	@Serializable(ObjectHashSetSerializer::class) var Stats: ObjectOpenHashSet<StatInstance> = ObjectOpenHashSet()
-	var BoardSlots = BoardSlots()
+	@Serializable var BoardSlots = BoardSlots()
 
 	@Transient var Board: RuneBoard = RuneBoard(this, LARGE_RUNE_SIZE)
 
 	fun Open(player: Player, runeItemStack: ItemStack)
-	{        //TODO
+	{
 		Board.Generate(player)
-		IsGenerated = true
 		Board.Open(player, runeItemStack)
 	}
 
+	/**
+	 * Applies all stats from a built ruin to an itemstack
+	 */
 	fun AddRuneToItem(player: Player, itemStack: ItemStack): Boolean
 	{
+		if (!IsBuilt) return false
 		Stats.forEach {
-			it.GetStat()?.ApplyToItemStack(it, itemStack)
+			it.GetStat().ApplyToItemStack(it, itemStack)
 		}
 		return true
 	}
 
+	/**
+	 * Sets the Rune Item's rune data. Only for use for Rune itemstack and not to add a rune's stats to and itemstack.
+	 * A shortcut for ItemStack.ItemMeta.setRuneData
+	 */
 	fun Serialize(itemStack: ItemStack)
 	{
-		val im = itemStack.itemMeta
-		RuneCraft.LogDebug(Level.INFO, "$this")
-		im.persistentDataContainer.set(RuneKey, RuneItemTagType(), this)
-		itemStack.itemMeta = im
-	}
-
-	fun SetSlots(slots: MutableList<BoardSlot>)
-	{
-		BoardSlots.Slots = slots
+		itemStack.editMeta {
+			it.setRuneData(this)
+		}
 	}
 
 	companion object
 	{
-		val RuneKey = NamespacedKey(RuneCraft.INSTANCE, "rune_data")
-		val BoardSlotKey = NamespacedKey(RuneCraft.INSTANCE, "board_slot_data")
-
 		fun Deserialize(itemStack: ItemStack): Rune?
 		{
 			if (itemStack.hasItemMeta())
 			{
 				val meta = itemStack.itemMeta
-				val rune = meta.persistentDataContainer.get(RuneKey, RuneItemTagType())
-				if (rune != null) rune.Board = RuneBoard(rune, LARGE_RUNE_SIZE)
+				val rune = meta.getRuneData()
+				if (rune != null)
+				{
+					rune.Board = RuneBoard(rune, LARGE_RUNE_SIZE)
+					return rune
+				}
 			}
 			return null
 		}
 	}
 }
 
-@Serializable @JvmRecord data class RuneType(val Name: String)
+// ************************************************
+// Rune Serialization
+
+@Serializable data class RuneType(val Name: String)
 {
 	companion object
 	{

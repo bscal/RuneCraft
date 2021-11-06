@@ -16,6 +16,7 @@ import org.bukkit.event.Event
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
+import java.util.function.Consumer
 
 abstract class BoardSlot(itemStack: ItemStack, val InstabilityLost: Int, val BreakLevel: BreakLevel) : IBoardSlot
 {
@@ -60,10 +61,9 @@ abstract class BoardSlot(itemStack: ItemStack, val InstabilityLost: Int, val Bre
 					if (customItem is RuneTool)
 					{
 						val slot = board.Rune.BoardSlots.Slots[key]
-						if (board.CanBreak(x, y, slot, tool, customItem, it))
+						if (board.CanBreak(slot, customItem))
 						{
-							slot.OnBreak(x, y, tool, customItem, it)
-							board.OnBreak(x, y, slot, tool, customItem, it)
+							board.OnBreak(x, y, slot, tool, customItem)
 						}
 					}
 				}

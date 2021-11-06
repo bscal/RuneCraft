@@ -39,6 +39,9 @@ const val LARGE_RUNE_SIZE = 6 * 6
 
 val RuneBoardCache = Object2ObjectOpenHashMap<UUID, RuneBoard>()
 
+/**
+ * GUI interface for managing a rune's board
+ */
 class RuneBoard(val Rune: Rune, val Size: Int)
 {
 	companion object
@@ -63,6 +66,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	fun Generate(player: Player): Boolean
 	{
 		if (Rune.IsGenerated) return false
+		Rune.IsGenerated = true
 		Generator = BoardRegistry.Registry[Rune.Type] ?: BoardRegistry.Default
 		Generator?.Generate(player, this, Rune.Rarity)
 		return true
@@ -91,18 +95,17 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		Gui?.show(player)
 	}
 
-	fun CanBreak(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent): Boolean
+	fun CanBreak(slot: BoardSlot, tool: RuneTool): Boolean
 	{
 		return slot.BreakLevel != BreakLevel.UNBREAKABLE && tool.Level.Id >= slot.BreakLevel.Id
 	}
 
-	fun OnBreak(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool, event: InventoryClickEvent)
+	fun OnBreak(x: Int, y: Int, slot: BoardSlot, itemStack: ItemStack, tool: RuneTool)
 	{
 		tool.Deincremeant(itemStack)
 		SetEmpty(x, y)
 		AddInstability(slot.GetInstabilityLost())
 		Update()
-		Gui?.update()
 	}
 
 	fun OnBuild(event: InventoryClickEvent)
@@ -119,13 +122,14 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 			this.volume = .75f
 			this.pitch = .75f
 		}
+		Player.closeInventory()
 	}
 
 	fun Update()
 	{
 		Rune.Power = LineSlots.size.toFloat()
-		UpdateBoardSlots()
 		UpdateStats()
+		Gui?.update()
 	}
 
 	private fun UpdateStats()
@@ -146,10 +150,6 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		}
 		statIconMeta.lore(statIconLore)
 		StatsIcon.item.itemMeta = statIconMeta
-	}
-
-	fun UpdateBoardSlots()
-	{
 	}
 
 	fun FindLine(x: Int, y: Int)
@@ -214,7 +214,7 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 	fun Destroy()
 	{
 		RuneItemStack.amount = RuneItemStack.amount - 1
-		Player.closeInventory(InventoryCloseEvent.Reason.PLAYER)
+		Player.closeInventory()
 		Gui = null
 		Player.sound(Sound.ENTITY_GENERIC_EXPLODE) {
 			category = SoundCategory.AMBIENT
@@ -224,29 +224,16 @@ class RuneBoard(val Rune: Rune, val Size: Int)
 		Player.sendMessage(Component.text("${KColors.RED}Your rune exploded because it's instability was too high."))
 	}
 
-	fun RemoveItem(x: Int, y: Int)
-	{        //Slots.remove(x or (y shl 16))
-		RunePanel.removeItem(x, y)
-		Rune.BoardSlots.Slots.removeAt(PackCoord(x, y))
-	}
-
 	fun SetEmpty(x: Int, y: Int)
 	{
 		RunePanel.removeItem(x, y)
 		Rune.BoardSlots.Slots[PackCoord(x, y)] = EmptySlot()
 	}
 
-	fun SetEmpty(key: Int)
+	fun SetItem(x: Int, y: Int, slot: BoardSlot)
 	{
-		val coords = UnpackCoord(key)
-		RunePanel.removeItem(coords[0], coords[1])
-		Rune.BoardSlots.Slots[key] = EmptySlot()
-	}
-
-	fun AddItem(x: Int, y: Int, slot: BoardSlot)
-	{
-		Rune.BoardSlots.Slots[PackCoord(x, y)] = slot
 		RunePanel.addItem(slot.GuiItemWrapper.GuiItem.copy(), x, y)
+		Rune.BoardSlots.Slots[PackCoord(x, y)] = slot
 	}
 
 	fun GetGuiTitle(): String = Gui?.title ?: "NULL"

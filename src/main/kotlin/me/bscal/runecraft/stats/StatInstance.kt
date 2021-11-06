@@ -19,6 +19,9 @@ import java.io.Externalizable
 import java.io.ObjectInput
 import java.io.ObjectOutput
 
+/**
+ * Stores data about a stat. StatInstance's are not directly linked to any Stat but use an ID to point to a Stat ID
+ */
 @Serializable(StatInstanceSerializer::class) data class StatInstance(var Id: NamespacedKey, var Value: Double,
 	var Operation: AttributeModifier.Operation, var AdditionalData: NBTData) : Externalizable
 {
@@ -42,6 +45,9 @@ import java.io.ObjectOutput
 		AdditionalData = NBTData.deserialize(input.readUTF())
 	}
 }
+
+// ************************************************
+// StatInstance Serialization
 
 class StatInstanceListTagType : PersistentDataType<ByteArray, List<StatInstance>>
 {

@@ -15,38 +15,38 @@ import java.io.ObjectOutputStream
 
 @Serializable(BoardSlotsSerializer::class) data class BoardSlots(var Slots: MutableList<BoardSlot> = ArrayList())
 
-object BoardSlotsSerializer : KSerializer<List<BoardSlot>>
+object BoardSlotsSerializer : KSerializer<BoardSlots>
 {
 	private val delegateSerializer = ListSerializer(BoardSlotSerializer)
 	override val descriptor = SerialDescriptor("ObjectOpenHashSet", delegateSerializer.descriptor)
 
-	override fun serialize(encoder: Encoder, value: List<BoardSlot>)
+	override fun serialize(encoder: Encoder, value: BoardSlots)
 	{
-		encoder.encodeSerializableValue(delegateSerializer, value)
+		encoder.encodeSerializableValue(delegateSerializer, value.Slots)
 	}
 
-	override fun deserialize(decoder: Decoder): List<BoardSlot>
+	override fun deserialize(decoder: Decoder): BoardSlots
 	{
-		return decoder.decodeSerializableValue(delegateSerializer)
+		return BoardSlots(decoder.decodeSerializableValue(delegateSerializer) as MutableList<BoardSlot>)
 	}
-
 }
 
 object BoardSlotSerializer : KSerializer<BoardSlot>
 {
-	override val descriptor = ByteArraySerializer().descriptor
+	private val delegateSerializer = ByteArraySerializer()
+	override val descriptor = SerialDescriptor("ByteArray", delegateSerializer.descriptor)
 
 	override fun serialize(encoder: Encoder, value: BoardSlot)
 	{
 		val byte = ByteArrayOutputStream()
 		val obj = ObjectOutputStream(byte)
 		obj.writeObject(value)
-		return encoder.encodeSerializableValue(ByteArraySerializer(), byte.toByteArray())
+		return encoder.encodeSerializableValue(delegateSerializer, byte.toByteArray())
 	}
 
 	override fun deserialize(decoder: Decoder): BoardSlot
 	{
-		val byte = ByteArrayInputStream(decoder.decodeSerializableValue(ByteArraySerializer()))
+		val byte = ByteArrayInputStream(decoder.decodeSerializableValue(delegateSerializer))
 		val obj = ObjectInputStream(byte)
 		return obj.readObject() as BoardSlot
 	}

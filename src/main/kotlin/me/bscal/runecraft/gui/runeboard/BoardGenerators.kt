@@ -91,7 +91,7 @@ class OverworldBoard : BaseBoardGenerator(8)
 			if (!decided.contains(key))
 			{
 				decided.add(key)
-				board.SetEmpty(key)
+				board.Rune.BoardSlots.Slots[key] = EmptySlot()
 				emptySlot--
 			}
 		}

@@ -16,23 +16,6 @@ import org.bukkit.inventory.ItemStack
 import java.text.DecimalFormat
 import java.util.*
 
-object StatRegistry
-{
-	val Registry = Object2ObjectOpenHashMap<NamespacedKey, BaseStat>()
-
-	val VANILLA_STAT: VanillaStat = Register(VanillaStat(NamespacedKey(RuneCraft.INSTANCE, "vanilla_stat"))) as VanillaStat
-	val POTION_STAT: PotionStat = Register(PotionStat(NamespacedKey(RuneCraft.INSTANCE, "potion_stat"))) as PotionStat
-	val EARTH_SHOCK_STAT: SpellStat = Register(
-		SpellStat(NamespacedKey(RuneCraft.INSTANCE, "earthshock_stat"), "Earth Shock", 3, SpellType.DAMAGE_DONE, ChanceCondition(),
-			AreaTarget(), DamageAction())) as SpellStat
-
-	fun Register(stat: BaseStat): BaseStat
-	{
-		Registry[stat.Id] = stat
-		return stat
-	}
-}
-
 abstract class BaseStat(val Id: NamespacedKey)
 {
 	var PositiveColor: ChatColor = KColors.GREEN

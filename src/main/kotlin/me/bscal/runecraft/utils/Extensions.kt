@@ -4,9 +4,14 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import me.bscal.runecraft.Rune
 import me.bscal.runecraft.RuneCraft
 import me.bscal.runecraft.RuneItemTagType
-import me.bscal.runecraft.stats.*
+import me.bscal.runecraft.stats.BaseStat
+import me.bscal.runecraft.stats.SpellStat
+import me.bscal.runecraft.stats.StatInstance
+import me.bscal.runecraft.stats.StatInstanceListTagType
 import org.bukkit.NamespacedKey
+import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
+import java.util.function.Consumer
 
 fun ObjectOpenHashSet<StatInstance>.addStat(stat: StatInstance)
 {

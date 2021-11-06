@@ -19,11 +19,14 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import java.util.logging.Level
 
+/**
+ * GUI interface for managing runes on an ItemStack
+ */
 class CrafterGUI(val ItemStack: ItemStack, val Size: Int)
 {
 	companion object
 	{
-		private val RUNE_KEY = NamespacedKey(RuneCraft.INSTANCE, "_RUNES")
+		private val ItemStackRunesKey = NamespacedKey(RuneCraft.INSTANCE, "item_runes")
 
 		fun SlotToIndex(slot: Int): Int
 		{
@@ -44,8 +47,6 @@ class CrafterGUI(val ItemStack: ItemStack, val Size: Int)
 	fun Open(player: Player)
 	{
 		Deserialize()
-		if (!this::m_Runes.isInitialized || m_Runes.isEmpty()) m_Runes = ArrayList(4)
-
 		RuneCraft.LogDebug(Level.INFO, "$m_Runes")
 
 		val background = StaticPane(9, 6)
@@ -81,20 +82,21 @@ class CrafterGUI(val ItemStack: ItemStack, val Size: Int)
 	fun Serialize()
 	{
 		val meta = ItemStack.itemMeta
-		meta.persistentDataContainer.set(RUNE_KEY, PersistentDataType.BYTE_ARRAY, ProtoBuf.encodeToByteArray(m_Runes))
+		meta.persistentDataContainer.set(ItemStackRunesKey, PersistentDataType.BYTE_ARRAY, ProtoBuf.encodeToByteArray(m_Runes))
 		ItemStack.itemMeta = meta
 	}
 
-	fun Deserialize(): Boolean
+	fun Deserialize()
 	{
 		if (ItemStack.hasItemMeta())
 		{
-			val bytes = ItemStack.itemMeta.persistentDataContainer.get(RUNE_KEY, PersistentDataType.BYTE_ARRAY)
-			if (bytes == null || bytes.isEmpty()) return false
-			m_Runes = ProtoBuf.decodeFromByteArray(bytes)
-			return true
+			val bytes = ItemStack.itemMeta.persistentDataContainer.get(ItemStackRunesKey, PersistentDataType.BYTE_ARRAY)
+			val list: ArrayList<Rune> =
+				if (bytes == null || bytes.isEmpty()) ArrayList() else ProtoBuf.decodeFromByteArray(bytes) as ArrayList<Rune>
+			m_Runes = if (list.isEmpty()) ArrayList() else list
+			return
 		}
-		return false
+		m_Runes = ArrayList()
 	}
 
 	private fun CreateHelpIcon(): GuiItem
